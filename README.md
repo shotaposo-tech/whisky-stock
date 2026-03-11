@@ -1,5 +1,5 @@
 # whisky-stock
-自宅のウイスキーの保存状況
+ウイスキー在庫管理
 <!DOCTYPE html>
 <html lang="ja">
 <head>
