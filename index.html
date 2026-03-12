@@ -8,8 +8,16 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { background: #fff; border-radius: 12px; border-left: 6px solid #b38728; color: #1e293b; user-select: none; transition: all 0.2s; }
-        .category-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: bold; }
+        .whisky-card { background: #fff; border-radius: 12px; border-left: 6px solid #b38728; color: #1e293b; user-select: none; }
+        /* カテゴリーごとの色分け */
+        .cat-スコッチ { border-left-color: #4338ca; }
+        .cat-ジャパニーズ { border-left-color: #b91c1c; }
+        .cat-アイリッシュ { border-left-color: #15803d; }
+        .cat-アメリカン { border-left-color: #a21caf; }
+        .cat-カナディアン { border-left-color: #0369a1; }
+        .cat-その他 { border-left-color: #4b5563; }
+        
+        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: #f1f5f9; color: #475569; }
         input[type=range] { -webkit-appearance: none; background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background: #b45309; height: 18px; width: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     </style>
@@ -47,16 +55,11 @@
         const db = getFirestore(app);
         let items = [];
 
-        // 確実な入れ替えロジック
         window.moveItem = async (index, direction) => {
             const newItems = [...items];
             const targetIndex = index + direction;
             if (targetIndex < 0 || targetIndex >= newItems.length) return;
-
-            // 配列内で入れ替え
             [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
-
-            // Firebaseの全アイテムのsortOrderを一括更新（Batch処理）
             const batch = writeBatch(db);
             newItems.forEach((item, idx) => {
                 const ref = doc(db, "users", auth.currentUser.uid, "whiskies", item.id);
@@ -86,12 +89,12 @@
                 items = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 document.getElementById('stats').innerText = "STOCK: " + items.length;
                 document.getElementById('whiskyList').innerHTML = items.map((w, i) => `
-                    <div class="whisky-card p-4 shadow-md relative" 
+                    <div class="whisky-card p-4 shadow-md relative cat-${w.category || 'その他'}" 
                          onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
                          ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="category-tag">${w.category || 'その他'}</span>
+                                <span class="tag">${w.category || 'その他'}</span>
                                 <h3 class="font-bold text-lg mt-1">${w.name}</h3>
                             </div>
                             <div class="text-amber-800 font-black text-xl">${w.remaining ?? 100}%</div>
@@ -112,7 +115,14 @@
         document.getElementById('addBtn').onclick = async () => {
             const name = prompt("銘柄名を入力してください");
             if (!name) return;
-            const category = prompt("カテゴリーを入力（例：ジャパニーズ、スコッチ、アイラ、バーボン等）", "ジャパニーズ");
+
+            const categories = ["スコッチ", "ジャパニーズ", "アイリッシュ", "アメリカン", "カナディアン", "その他"];
+            const catMsg = "カテゴリーを番号で選んでください:\n" + categories.map((c, i) => (i+1) + ": " + c).join("\n");
+            const catInput = prompt(catMsg, "1");
+            
+            // 入力された数値に対応するカテゴリーを取得（デフォルトは「その他」）
+            const catIndex = parseInt(catInput) - 1;
+            const category = categories[catIndex] || "その他";
             
             await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
                 name, category, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
