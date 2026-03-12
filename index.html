@@ -97,7 +97,22 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            document.getElementById('sort-bar').style.display = page === 'wish' ? 'none' : 'flex';
+            
+            const sortBar = document.getElementById('sort-bar');
+            const abvBtn = document.getElementById('sort-abv');
+
+            if (page === 'wish') {
+                sortBar.style.display = 'none';
+            } else {
+                sortBar.style.display = 'flex';
+                // 【修正】ARCHIVEタブの時だけABVソートボタンを隠す
+                if (page === 'archive') {
+                    abvBtn.style.display = 'none';
+                    if (currentSort === 'abv') setSort('sortOrder'); // ABVソート中ならCUSTOMに戻す
+                } else {
+                    abvBtn.style.display = 'inline-block';
+                }
+            }
             render();
         };
 
@@ -133,13 +148,8 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
                 
-                // 【修正】現在の表示アイテムがARCHIVE条件に合うかを厳格に判定
-                const isArchiveCard = (w.remaining <= 0 && !w.isWish);
-                
-                // ARCHIVEカードの場合は度数バッジを生成しない
-                const abvBadge = !isArchiveCard 
-                    ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` 
-                    : '';
+                // ボトル内のABVチップは全タブで表示
+                const abvBadge = `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>`;
 
                 if (w.isWish) {
                     return `
@@ -155,7 +165,7 @@
                 }
 
                 return `
-                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${isArchiveCard ? 'archive-card' : ''}" ${pressEvents}>
+                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
                     <div class="flex justify-between items-start mb-1 pr-16">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
