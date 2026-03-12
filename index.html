@@ -9,7 +9,8 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { background: #fff; border-radius: 12px; border-left: 6px solid #b38728; color: #1e293b; user-select: none; }
-        /* カテゴリーごとの色分け */
+        
+        /* カテゴリーごとの色 */
         .cat-スコッチ { border-left-color: #4338ca; }
         .cat-ジャパニーズ { border-left-color: #b91c1c; }
         .cat-アイリッシュ { border-left-color: #15803d; }
@@ -19,10 +20,14 @@
         
         .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: #f1f5f9; color: #475569; }
         input[type=range] { -webkit-appearance: none; background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background: #b45309; height: 18px; width: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background: #b45309; height: 18px; width: 18px; border-radius: 50%; border: 2px solid white; }
+        
+        /* モーダル表示のアニメーション */
+        #catModal { display: none; }
+        #catModal.active { display: flex; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100">
+<body class="bg-slate-900 text-slate-100 overflow-x-hidden">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
         <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-6 sticky top-0 z-20 text-center">
             <h1 class="text-2xl italic gold-text">Whisky Stock</h1>
@@ -30,6 +35,14 @@
         </header>
 
         <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-4 pb-32"></main>
+
+        <div id="catModal" class="fixed inset-0 z-50 bg-black/60 items-center justify-center p-6 backdrop-blur-sm">
+            <div class="bg-white text-slate-900 w-full max-w-xs rounded-2xl p-6 shadow-2xl">
+                <h2 class="text-lg font-bold mb-4 text-center">カテゴリーを選択</h2>
+                <div id="catOptions" class="grid grid-cols-1 gap-2">
+                    </div>
+            </div>
+        </div>
 
         <button id="addBtn" class="fixed bottom-10 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90">
             <span>＋</span>
@@ -54,6 +67,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let items = [];
+        let tempName = ""; // 名前を一時保存
+
+        const categories = ["スコッチ", "ジャパニーズ", "アイリッシュ", "アメリカン", "カナディアン", "その他"];
 
         window.moveItem = async (index, direction) => {
             const newItems = [...items];
@@ -112,22 +128,40 @@
             });
         });
 
-        document.getElementById('addBtn').onclick = async () => {
-            const name = prompt("銘柄名を入力してください");
-            if (!name) return;
-
-            const categories = ["スコッチ", "ジャパニーズ", "アイリッシュ", "アメリカン", "カナディアン", "その他"];
-            const catMsg = "カテゴリーを番号で選んでください:\n" + categories.map((c, i) => (i+1) + ": " + c).join("\n");
-            const catInput = prompt(catMsg, "1");
-            
-            // 入力された数値に対応するカテゴリーを取得（デフォルトは「その他」）
-            const catIndex = parseInt(catInput) - 1;
-            const category = categories[catIndex] || "その他";
-            
-            await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                name, category, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
-            });
+        // カテゴリーを選択して保存する処理
+        window.saveWithCategory = async (category) => {
+            document.getElementById('catModal').classList.remove('active');
+            if (!tempName) return;
+            try {
+                await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
+                    name: tempName,
+                    category: category,
+                    remaining: 100,
+                    createdAt: Date.now(),
+                    sortOrder: items.length * 10
+                });
+                tempName = "";
+            } catch (e) { alert("保存エラー: " + e.message); }
         };
+
+        // ＋ボタン：名前を聞いてからモーダルを出す
+        document.getElementById('addBtn').onclick = () => {
+            const name = prompt("銘柄名を入力してください");
+            if (name) {
+                tempName = name;
+                document.getElementById('catModal').classList.add('active');
+            }
+        };
+
+        // モーダル内のボタン生成
+        const catOptions = document.getElementById('catOptions');
+        categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = "w-full py-3 bg-slate-100 rounded-xl font-bold active:bg-amber-100 transition-colors";
+            btn.innerText = cat;
+            btn.onclick = () => saveWithCategory(cat);
+            catOptions.appendChild(btn);
+        });
     </script>
 </body>
 </html>
