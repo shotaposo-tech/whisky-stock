@@ -33,6 +33,9 @@
 
         #modal, #flavorModal { display: none; }
         #modal.active, #flavorModal.active { display: flex; z-index: 100; }
+        .editing-label { font-size: 10px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
+        .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
+
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.1em; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
     </style>
@@ -62,7 +65,9 @@
 
         <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
-                <h2 id="modalTitle" class="text-xl font-black mb-6 text-center">Select</h2>
+                <span class="editing-label">Category for</span>
+                <span id="editCatTargetName" class="editing-name">---</span>
+                <h2 id="modalTitle" class="hidden">Select</h2>
                 <div id="modalOptions" class="grid grid-cols-1 gap-2"></div>
                 <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
@@ -70,7 +75,8 @@
 
         <div id="flavorModal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
-                <h2 class="text-xl font-black mb-6 text-center">Flavor Note</h2>
+                <span class="editing-label">Flavor for</span>
+                <span id="editFlavorTargetName" class="editing-name">---</span>
                 <div id="flavorOptions" class="grid grid-cols-2 gap-2"></div>
                 <button onclick="closeFlavorModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
@@ -126,11 +132,10 @@
             const list = document.getElementById('whiskyList');
             let filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0) : (w.remaining <= 0));
             
-            // Sorting Logic
             filtered.sort((a, b) => {
                 if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
-                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0); // High to Low
-                if (currentSort === 'remaining') return b.remaining - a.remaining; // High to Low
+                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                if (currentSort === 'remaining') return b.remaining - a.remaining;
                 if (currentSort === 'category') return a.category.localeCompare(b.category);
                 return 0;
             });
@@ -145,12 +150,12 @@
                     <div class="flex justify-between items-start mb-1 pr-16">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}')">${catDisp} ✎</span>
-                                <span class="abv-badge" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.abv || 40}')">${w.abv || '--'}%</span>
+                                <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name}')">${catDisp} ✎</span>
+                                <span class="abv-badge" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name}', '${w.abv || 40}')">${w.abv || '--'}%</span>
                             </div>
                             <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name}')">${w.name}</h3>
-                            <div class="mt-3" onclick="event.stopPropagation(); openFlavorEdit('${w.id}')">
-                                <span class="flavor-tag text-amber-200"># ${w.flavor || 'Add flavor note'}</span>
+                            <div class="mt-3" onclick="event.stopPropagation(); openFlavorEdit('${w.id}', '${w.name}')">
+                                <span class="flavor-tag text-amber-200"># ${w.flavor || 'Add flavor note'} ✎</span>
                             </div>
                         </div>
                         <div class="text-white font-black text-2xl opacity-90 text-right">${w.remaining}%</div>
@@ -178,17 +183,18 @@
         };
 
         window.editName = async (id, old) => {
-            const n = prompt("Edit Name", old);
+            const n = prompt(`Edit Name for "${old}"`, old);
             if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n });
         };
 
-        window.editAbv = async (id, old) => {
-            const n = prompt("Edit Alcohol By Volume (ABV %)", old);
+        window.editAbv = async (id, name, old) => {
+            const n = prompt(`Enter ABV (%) for "${name}"`, old);
             if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 0 });
         };
 
-        window.openFlavorEdit = (id) => {
+        window.openFlavorEdit = (id, name) => {
             editTargetId = id;
+            document.getElementById('editFlavorTargetName').innerText = name;
             document.getElementById('flavorOptions').innerHTML = flavors.map(f => `<button onclick="selectFlavor('${f}')" class="p-3 bg-slate-700 rounded-xl font-bold text-sm border border-white/5">${f}</button>`).join('');
             document.getElementById('flavorModal').classList.add('active');
         };
@@ -198,20 +204,25 @@
             closeFlavorModal();
         };
 
-        window.openCatEdit = (id) => { editTargetId = id; showModal("Category", categories); };
+        window.openCatEdit = (id, name) => { 
+            editTargetId = id; 
+            document.getElementById('editCatTargetName').innerText = name;
+            showModal("Category", categories); 
+        };
+
         const showModal = (title, opts, isReg = false) => {
             const m = document.getElementById('modal');
-            document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-2xl font-black text-white border border-white/10 ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>`).join('');
             m.classList.add('active');
         };
 
         window.selectCat = (c) => c === "Scotch" ? showModal("Region", scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
+        
         const finalize = async (c, r) => {
             if (editTargetId) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
             else {
-                const abv = prompt(`ABV (%) for ${tempName}?`, "40");
+                const abv = prompt(`Enter ABV (%) for "${tempName}"`, "40");
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
                     name: tempName, category: c, region: r, abv: parseFloat(abv) || 0, remaining: 100, flavor: "", sortOrder: items.length * 10
                 });
@@ -223,7 +234,7 @@
         window.closeFlavorModal = () => { document.getElementById('flavorModal').classList.remove('active'); editTargetId = null; };
 
         window.moveItem = async (index, direction) => {
-            if (currentSort !== 'sortOrder') { alert("Please switch to 'CUSTOM' sort to manually reorder."); return; }
+            if (currentSort !== 'sortOrder') { alert("Switch to 'CUSTOM' sort to reorder."); return; }
             const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0) : (w.remaining <= 0));
             const overallIndex = items.findIndex(item => item.id === filtered[index].id);
             const targetOverallIndex = overallIndex + direction;
@@ -249,7 +260,12 @@
 
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("New Bottle Name");
-            if (n) { tempName = n; editTargetId = null; showModal("Category", categories); }
+            if (n) { 
+                tempName = n; 
+                editTargetId = null; 
+                document.getElementById('editCatTargetName').innerText = n;
+                showModal("Category", categories); 
+            }
         };
     </script>
 </body>
