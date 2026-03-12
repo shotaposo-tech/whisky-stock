@@ -9,17 +9,17 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* カード：余白を抑え、少しスリムに */
         .whisky-card { border-radius: 16px; border: 3px solid #4b5563; color: white; user-select: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
         
+        /* 配色変更：スコッチ(青)、ジャパニーズ(緑) */
         .cat-スコッチ { border-color: #2563eb; background-color: #1d4ed8; }
         .cat-スコッチ input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
         
-        .cat-ジャパニーズ { border-color: #dc2626; background-color: #b91c1c; }
-        .cat-ジャパニーズ input[type=range]::-webkit-slider-thumb { background: #f87171; }
+        .cat-ジャパニーズ { border-color: #059669; background-color: #047857; }
+        .cat-ジャパニーズ input[type=range]::-webkit-slider-thumb { background: #34d399; }
         
-        .cat-アイリッシュ { border-color: #059669; background-color: #047857; }
-        .cat-アイリッシュ input[type=range]::-webkit-slider-thumb { background: #34d399; }
+        .cat-アイリッシュ { border-color: #10b981; background-color: #059669; }
+        .cat-アイリッシュ input[type=range]::-webkit-slider-thumb { background: #6ee7b7; }
         
         .cat-アメリカン { border-color: #d97706; background-color: #b45309; }
         .cat-アメリカン input[type=range]::-webkit-slider-thumb { background: #fbbf24; }
@@ -34,7 +34,6 @@
         
         .slider-container { width: calc(100% - 55px); }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; width: 100%; }
-        /* つまみを24pxに縮小 */
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
         
         #catModal { display: none; }
@@ -42,8 +41,8 @@
         
         .category-btn { width: 100%; padding: 16px; margin-bottom: 10px; border-radius: 16px; font-weight: 900; font-size: 1.1rem; color: white; text-align: center; border: 2px solid rgba(255,255,255,0.1); }
         .btn-スコッチ { background: #2563eb; }
-        .btn-ジャパニーズ { background: #dc2626; }
-        .btn-アイリッシュ { background: #059669; }
+        .btn-ジャパニーズ { background: #059669; }
+        .btn-アイリッシュ { background: #10b981; }
         .btn-アメリカン { background: #d97706; }
         .btn-カナディアン { background: #7c3aed; }
         .btn-その他 { background: #4b5563; }
@@ -111,6 +110,13 @@
             await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
         };
 
+        window.editBottleName = async (id, currentName) => {
+            const newName = prompt("銘柄名を変更", currentName);
+            if (newName && newName !== currentName) {
+                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: newName });
+            }
+        };
+
         window.openCategoryEdit = (id, currentName) => {
             editTargetId = id; tempName = "";
             document.getElementById('modalTitle').innerText = `${currentName} の分類変更`;
@@ -141,7 +147,9 @@
                         <div class="flex justify-between items-start mb-3 pr-12">
                             <div class="flex-1">
                                 <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${w.category || 'その他'} ✎</span>
-                                <h3 class="font-black text-xl mt-2 tracking-tighter leading-tight break-all">${w.name}</h3>
+                                <h3 class="font-black text-xl mt-2 tracking-tighter leading-tight break-all" onclick="event.stopPropagation(); editBottleName('${w.id}', '${w.name}')">
+                                    ${w.name} <span class="text-xs opacity-50">✎</span>
+                                </h3>
                             </div>
                             <div class="text-white font-black text-2xl opacity-90 ml-2">${w.remaining ?? 100}<span class="text-xs ml-1">%</span></div>
                         </div>
