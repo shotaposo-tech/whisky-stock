@@ -8,37 +8,25 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        
         .whisky-card { border-radius: 16px; border: 3px solid #4b5563; color: white; user-select: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        
-        /* 配色変更：スコッチ(青)、ジャパニーズ(緑) */
         .cat-スコッチ { border-color: #2563eb; background-color: #1d4ed8; }
         .cat-スコッチ input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
-        
         .cat-ジャパニーズ { border-color: #059669; background-color: #047857; }
         .cat-ジャパニーズ input[type=range]::-webkit-slider-thumb { background: #34d399; }
-        
         .cat-アイリッシュ { border-color: #10b981; background-color: #059669; }
         .cat-アイリッシュ input[type=range]::-webkit-slider-thumb { background: #6ee7b7; }
-        
         .cat-アメリカン { border-color: #d97706; background-color: #b45309; }
         .cat-アメリカン input[type=range]::-webkit-slider-thumb { background: #fbbf24; }
-        
         .cat-カナディアン { border-color: #7c3aed; background-color: #6d28d9; }
         .cat-カナディアン input[type=range]::-webkit-slider-thumb { background: #a78bfa; }
-        
         .cat-その他 { border-color: #4b5563; background-color: #374151; }
         .cat-その他 input[type=range]::-webkit-slider-thumb { background: #9ca3af; }
-
         .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 900; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        
         .slider-container { width: calc(100% - 55px); }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
-        
         #catModal { display: none; }
         #catModal.active { display: flex; }
-        
         .category-btn { width: 100%; padding: 16px; margin-bottom: 10px; border-radius: 16px; font-weight: 900; font-size: 1.1rem; color: white; text-align: center; border: 2px solid rgba(255,255,255,0.1); }
         .btn-スコッチ { background: #2563eb; }
         .btn-ジャパニーズ { background: #059669; }
@@ -46,6 +34,7 @@
         .btn-アメリカン { background: #d97706; }
         .btn-カナディアン { background: #7c3aed; }
         .btn-その他 { background: #4b5563; }
+        .btn-sub { background: #334155; } /* サブメニュー（地域選択）用 */
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 overflow-x-hidden">
@@ -89,9 +78,11 @@
         const db = getFirestore(app);
         let items = [];
         let tempName = "";
+        let tempCategory = "";
         let editTargetId = null;
 
         const categories = ["スコッチ", "ジャパニーズ", "アイリッシュ", "アメリカン", "カナディアン", "その他"];
+        const scotchRegions = ["スペイサイド", "ハイランド", "ローランド", "アイラ", "キャンベルタウン", "アイランズ", "指定なし"];
 
         window.moveItem = async (index, direction) => {
             const newItems = [...items];
@@ -118,9 +109,8 @@
         };
 
         window.openCategoryEdit = (id, currentName) => {
-            editTargetId = id; tempName = "";
-            document.getElementById('modalTitle').innerText = `${currentName} の分類変更`;
-            document.getElementById('catModal').classList.add('active');
+            editTargetId = id; tempName = ""; tempCategory = "";
+            showCategoryModal("カテゴリーを選択", categories);
         };
 
         let pressTimer;
@@ -139,14 +129,16 @@
             onSnapshot(q, (snap) => {
                 items = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 document.getElementById('stats').innerText = "STOCK: " + items.length;
-                document.getElementById('whiskyList').innerHTML = items.map((w, i) => `
+                document.getElementById('whiskyList').innerHTML = items.map((w, i) => {
+                    const categoryDisplay = w.region && w.region !== "指定なし" ? `${w.category} / ${w.region}` : (w.category || 'その他');
+                    return `
                     <div class="whisky-card p-4 relative cat-${w.category || 'その他'}" 
                          onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
                          ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
                         
                         <div class="flex justify-between items-start mb-3 pr-12">
                             <div class="flex-1">
-                                <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${w.category || 'その他'} ✎</span>
+                                <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${categoryDisplay} ✎</span>
                                 <h3 class="font-black text-xl mt-2 tracking-tighter leading-tight break-all" onclick="event.stopPropagation(); editBottleName('${w.id}', '${w.name}')">
                                     ${w.name} <span class="text-xs opacity-50">✎</span>
                                 </h3>
@@ -166,18 +158,47 @@
                             <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-10 h-12 bg-black/30 backdrop-blur-sm rounded-lg text-sm border border-white/20 active:bg-white/40">▼</button>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             });
         });
 
+        const showCategoryModal = (title, options, isRegion = false) => {
+            const modal = document.getElementById('catModal');
+            const catOptions = document.getElementById('catOptions');
+            document.getElementById('modalTitle').innerText = title;
+            catOptions.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = isRegion ? 'category-btn btn-sub' : `category-btn btn-${opt}`;
+                btn.innerText = opt;
+                btn.onclick = () => isRegion ? selectRegion(opt) : selectCategory(opt);
+                catOptions.appendChild(btn);
+            });
+            modal.classList.add('active');
+        };
+
         window.selectCategory = async (category) => {
+            if (category === "スコッチ") {
+                tempCategory = "スコッチ";
+                showCategoryModal("スコッチの地域を選択", scotchRegions, true);
+            } else {
+                finalizeUpdate(category, "");
+            }
+        };
+
+        window.selectRegion = async (region) => {
+            finalizeUpdate("スコッチ", region);
+        };
+
+        const finalizeUpdate = async (category, region) => {
             document.getElementById('catModal').classList.remove('active');
             if (editTargetId) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category });
+                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category, region });
                 editTargetId = null;
             } else if (tempName) {
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                    name: tempName, category, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
+                    name: tempName, category, region, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
                 });
                 tempName = "";
             }
@@ -185,20 +206,10 @@
 
         document.getElementById('addBtn').onclick = () => {
             const name = prompt("銘柄名を入力してください");
-            if (name) { tempName = name; editTargetId = null; 
-                document.getElementById('modalTitle').innerText = "カテゴリーを選択";
-                document.getElementById('catModal').classList.add('active');
+            if (name) { tempName = name; editTargetId = null;
+                showCategoryModal("カテゴリーを選択", categories);
             }
         };
-
-        const catOptions = document.getElementById('catOptions');
-        categories.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = `category-btn btn-${cat}`;
-            btn.innerText = cat;
-            btn.onclick = () => selectCategory(cat);
-            catOptions.appendChild(btn);
-        });
     </script>
 </body>
 </html>
