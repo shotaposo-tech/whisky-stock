@@ -29,7 +29,7 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; }
         
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         #modal { display: none; }
@@ -56,6 +56,7 @@
                 <div class="flex gap-1.5">
                     <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                     <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
+                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
                     <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
                 </div>
             </div>
@@ -110,7 +111,10 @@
 
         window.setSort = (key) => {
             currentSort = key;
-            ['sortOrder', 'category', 'remaining'].forEach(k => document.getElementById('sort-' + k)?.classList.toggle('active', k === key));
+            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
+                const el = document.getElementById('sort-' + k);
+                if(el) el.classList.toggle('active', k === key);
+            });
             render();
         };
 
@@ -126,6 +130,7 @@
             if (currentPage !== 'wish') {
                 filtered.sort((a, b) => {
                     if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
+                    if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                     if (currentSort === 'remaining') return b.remaining - a.remaining;
                     if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
                     return 0;
@@ -134,8 +139,6 @@
 
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
-                
-                // Common event handlers for long press
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
 
                 if (w.isWish) {
@@ -157,9 +160,9 @@
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                                <span class="tag bg-black/40 text-amber-400 border-none">${w.abv || 40}%</span>
+                                <span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>
                             </div>
-                            <h3 class="font-black text-xl tracking-tighter break-all leading-tight">${w.name}</h3>
+                            <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                         </div>
                         <div class="text-white font-black text-2xl opacity-90 text-right">${w.remaining}%</div>
                     </div>
@@ -174,6 +177,16 @@
                     </div>
                 </div>`;
             }).join('');
+        };
+
+        window.editName = async (id, old) => {
+            const n = prompt(`銘柄名を編集`, old);
+            if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n });
+        };
+
+        window.editAbv = async (id, name, old) => {
+            const n = prompt(`"${name}" のアルコール度数を入力`, old);
+            if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 0 });
         };
 
         window.moveToShelf = async (id) => {
@@ -205,8 +218,9 @@
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
             } else {
                 const isWish = currentPage === 'wish';
+                const abvInput = isWish ? 40 : prompt(`アルコール度数(%)を入力してください`, "40");
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                    name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: isWish, sortOrder: items.length * 10
+                    name: tempName, category: c, region: r, abv: parseFloat(abvInput) || 40, remaining: 100, isWish: isWish, sortOrder: items.length * 10
                 });
             }
             closeModal();
@@ -215,8 +229,8 @@
         window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
 
         window.moveItem = async (index, direction) => {
-            const isShelf = currentPage === 'shelf';
-            const filtered = items.filter(w => isShelf ? (w.remaining > 0 && !w.isWish) : (w.remaining <= 0 && !w.isWish));
+            if (currentSort !== 'sortOrder') return;
+            const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0 && !w.isWish) : (w.remaining <= 0 && !w.isWish));
             const overallIndex = items.findIndex(item => item.id === filtered[index].id);
             const targetOverallIndex = overallIndex + direction;
             if (targetOverallIndex < 0 || targetOverallIndex >= items.length) return;
