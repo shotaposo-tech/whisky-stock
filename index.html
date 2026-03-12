@@ -9,10 +9,8 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* 基本のカード設定：極太枠線と白文字 */
         .whisky-card { border-radius: 20px; border: 4px solid #4b5563; color: white; user-select: none; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
         
-        /* カテゴリー別の配色：背景を濃く、枠を太く */
         .cat-スコッチ { border-color: #2563eb; background-color: #1d4ed8; }
         .cat-スコッチ input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
         
@@ -33,25 +31,26 @@
 
         .tag { font-size: 11px; padding: 4px 12px; border-radius: 99px; font-weight: 900; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); }
         
+        /* スライダー：右側のボタンに被らないよう幅を制限 */
+        .slider-container { width: calc(100% - 60px); }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 30px; width: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
         
         #catModal { display: none; }
         #catModal.active { display: flex; }
         
-        .category-btn { width: 100%; padding: 18px; margin-bottom: 12px; border-radius: 20px; font-weight: 900; font-size: 1.2rem; color: white; transition: all 0.2s; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); }
+        .category-btn { width: 100%; padding: 18px; margin-bottom: 12px; border-radius: 20px; font-weight: 900; font-size: 1.2rem; color: white; text-align: center; border: 2px solid rgba(255,255,255,0.1); }
         .btn-スコッチ { background: #2563eb; }
         .btn-ジャパニーズ { background: #dc2626; }
         .btn-アイリッシュ { background: #059669; }
         .btn-アメリカン { background: #d97706; }
         .btn-カナディアン { background: #7c3aed; }
         .btn-その他 { background: #4b5563; }
-        .category-btn:active { transform: scale(0.92); filter: brightness(1.2); }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 overflow-x-hidden">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
-        <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-6 sticky top-0 z-20 text-center">
+        <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-6 sticky top-0 z-20 text-center text-slate-100">
             <h1 class="text-2xl italic gold-text">Whisky Stock</h1>
             <div id="stats" class="absolute right-4 top-7 text-[10px] border border-amber-600 px-2 py-0.5 rounded text-amber-500 font-mono">STOCK: 0</div>
         </header>
@@ -66,7 +65,7 @@
             </div>
         </div>
 
-        <button id="addBtn" class="fixed bottom-10 right-6 w-18 h-18 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-[0_0_30px_rgba(180,83,9,0.6)] flex items-center justify-center text-4xl z-30 active:scale-90 border-4 border-amber-200/30">
+        <button id="addBtn" class="fixed bottom-10 right-6 w-18 h-18 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-4 border-amber-200/30">
             <span>＋</span>
         </button>
     </div>
@@ -112,8 +111,7 @@
         };
 
         window.openCategoryEdit = (id, currentName) => {
-            editTargetId = id;
-            tempName = "";
+            editTargetId = id; tempName = "";
             document.getElementById('modalTitle').innerText = `${currentName} の分類変更`;
             document.getElementById('catModal').classList.add('active');
         };
@@ -138,22 +136,25 @@
                     <div class="whisky-card p-6 relative cat-${w.category || 'その他'}" 
                          onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
                          ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
-                        <div class="flex justify-between items-start mb-6">
-                            <div class="pr-8">
+                        
+                        <div class="flex justify-between items-start mb-6 pr-12">
+                            <div class="flex-1">
                                 <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${w.category || 'その他'} ✎</span>
-                                <h3 class="font-black text-2xl mt-4 tracking-tighter leading-tight">${w.name}</h3>
+                                <h3 class="font-black text-2xl mt-4 tracking-tighter leading-tight break-all">${w.name}</h3>
                             </div>
-                            <div class="text-white font-black text-3xl opacity-90">${w.remaining ?? 100}<span class="text-sm ml-1">%</span></div>
+                            <div class="text-white font-black text-3xl opacity-90 ml-2">${w.remaining ?? 100}<span class="text-sm ml-1">%</span></div>
                         </div>
-                        <div class="flex items-center space-x-2">
+
+                        <div class="slider-container">
                              <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
                                oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-3xl').innerHTML=this.value+'<span class=\'text-sm ml-1\'>%</span>'"
                                onchange="updateStock('${w.id}', this.value)"
                                onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
                         </div>
-                        <div class="absolute right-3 bottom-3 flex space-x-2">
-                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-12 h-12 bg-black/20 backdrop-blur-md rounded-2xl text-lg font-bold border border-white/20 active:bg-white/40 transition-all">▲</button>
-                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-12 h-12 bg-black/20 backdrop-blur-md rounded-2xl text-lg font-bold border border-white/20 active:bg-white/40 transition-all">▼</button>
+
+                        <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
+                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-12 h-14 bg-black/30 backdrop-blur-sm rounded-xl text-lg font-bold border border-white/20 active:bg-white/40 transition-all">▲</button>
+                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-12 h-14 bg-black/30 backdrop-blur-sm rounded-xl text-lg font-bold border border-white/20 active:bg-white/40 transition-all">▼</button>
                         </div>
                     </div>
                 `).join('');
@@ -175,9 +176,7 @@
 
         document.getElementById('addBtn').onclick = () => {
             const name = prompt("銘柄名を入力してください");
-            if (name) {
-                tempName = name;
-                editTargetId = null;
+            if (name) { tempName = name; editTargetId = null; 
                 document.getElementById('modalTitle').innerText = "カテゴリーを選択";
                 document.getElementById('catModal').classList.add('active');
             }
