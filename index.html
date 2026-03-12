@@ -14,6 +14,7 @@
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
 
+        /* Category Styles - Fixed "Others" naming */
         .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
         .btn-Japanese, .cat-Japanese { border-color: #059669; background: linear-gradient(135deg, #047857, #065f46); }
         .btn-Irish, .cat-Irish { border-color: #10b981; background: linear-gradient(135deg, #059669, #047857); }
@@ -67,7 +68,6 @@
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
                 <span class="editing-label">Category for</span>
                 <span id="editCatTargetName" class="editing-name">---</span>
-                <h2 id="modalTitle" class="hidden">Select</h2>
                 <div id="modalOptions" class="grid grid-cols-1 gap-2"></div>
                 <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
@@ -123,7 +123,8 @@
         window.setSort = (key) => {
             currentSort = key;
             ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
-                document.getElementById('sort-' + k).classList.toggle('active', k === key);
+                const el = document.getElementById('sort-' + k);
+                if(el) el.classList.toggle('active', k === key);
             });
             render();
         };
@@ -136,7 +137,7 @@
                 if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                 if (currentSort === 'remaining') return b.remaining - a.remaining;
-                if (currentSort === 'category') return a.category.localeCompare(b.category);
+                if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
                 return 0;
             });
 
@@ -144,7 +145,7 @@
                 const catDisp = w.region && w.region !== "No Region" ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const isArchive = w.remaining <= 0;
                 return `
-                <div class="whisky-card p-5 relative cat-${w.category} ${isArchive ? 'archive-card' : ''}"
+                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${isArchive ? 'archive-card' : ''}"
                      onmousedown="startPress('${w.id}', '${w.name}')" ontouchstart="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" ontouchend="cancelPress()">
                     
                     <div class="flex justify-between items-start mb-1 pr-16">
@@ -207,25 +208,33 @@
         window.openCatEdit = (id, name) => { 
             editTargetId = id; 
             document.getElementById('editCatTargetName').innerText = name;
-            showModal("Category", categories); 
+            showModal(categories); 
         };
 
-        const showModal = (title, opts, isReg = false) => {
+        const showModal = (opts, isReg = false) => {
             const m = document.getElementById('modal');
-            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-2xl font-black text-white border border-white/10 ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>`).join('');
+            document.getElementById('modalOptions').innerHTML = opts.map(o => `
+                <button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" 
+                        class="p-4 rounded-2xl font-black text-white border border-white/10 ${isReg ? 'bg-slate-700' : 'btn-'+o}">
+                    ${o}
+                </button>
+            `).join('');
             m.classList.add('active');
         };
 
-        window.selectCat = (c) => c === "Scotch" ? showModal("Region", scotchRegions, true) : finalize(c, "");
+        window.selectCat = (c) => c === "Scotch" ? showModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
         
         const finalize = async (c, r) => {
-            if (editTargetId) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
-            else {
+            if (editTargetId) {
+                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
+                editTargetId = null;
+            } else {
                 const abv = prompt(`Enter ABV (%) for "${tempName}"`, "40");
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
                     name: tempName, category: c, region: r, abv: parseFloat(abv) || 0, remaining: 100, flavor: "", sortOrder: items.length * 10
                 });
+                tempName = "";
             }
             closeModal();
         };
@@ -236,6 +245,7 @@
         window.moveItem = async (index, direction) => {
             if (currentSort !== 'sortOrder') { alert("Switch to 'CUSTOM' sort to reorder."); return; }
             const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0) : (w.remaining <= 0));
+            if(!filtered[index]) return;
             const overallIndex = items.findIndex(item => item.id === filtered[index].id);
             const targetOverallIndex = overallIndex + direction;
             if (targetOverallIndex < 0 || targetOverallIndex >= items.length) return;
@@ -264,7 +274,7 @@
                 tempName = n; 
                 editTargetId = null; 
                 document.getElementById('editCatTargetName').innerText = n;
-                showModal("Category", categories); 
+                showModal(categories); 
             }
         };
     </script>
