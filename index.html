@@ -21,7 +21,6 @@
             cursor: pointer;
             user-select: none;
         }
-        /* タップ時のフィードバック */
         .whisky-card:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
@@ -45,58 +44,50 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+        // 新しいConfigを反映
         const firebaseConfig = {
-            apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MXu_fE_6_R-o",
+            apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
             authDomain: "my-whisky-app.firebaseapp.com",
             projectId: "my-whisky-app",
             storageBucket: "my-whisky-app.firebasestorage.app",
-            messagingSenderId: "599572459740",
-            appId: "1:599572459740:web:9f8e4e7e6f8a4e7e6f8a4e"
+            messagingSenderId: "577760896040",
+            appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d",
+            measurementId: "G-P52P51S24F"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- 機能修正: 5%ずつ減らす ---
-        window.reduceStock = async (id, current) => {
-            const next = current <= 0 ? 100 : current - 5;
-            const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
-            await updateDoc(docRef, { remaining: next });
-        };
-
-        window.deleteWhisky = async (id, name) => {
-            if (confirm(`「${name}」を削除しますか？`)) {
-                const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
-                await deleteDoc(docRef);
-            }
-        };
-
-        // --- 機能修正: 長押しを1.5秒(1500ms)に設定 ---
         let pressTimer;
         let isLongPress = false;
 
-        window.startPress = (id, name) => {
-            isLongPress = false;
-            pressTimer = setTimeout(() => {
-                isLongPress = true;
-                window.deleteWhisky(id, name);
-            }, 1500); // 1.5秒
-        };
-
-        window.cancelPress = (id, current) => {
-            clearTimeout(pressTimer);
-            // 長押し（削除）に至らなかった場合のみ、タップとして在庫を減らす
-            if (!isLongPress && id) {
-                window.reduceStock(id, current);
+        // 5%ずつ減らす
+        window.handleAction = async (id, current, name) => {
+            if (!isLongPress) {
+                const next = current <= 0 ? 100 : current - 5;
+                const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
+                await updateDoc(docRef, { remaining: next });
             }
         };
 
+        // 1.5秒の長押し判定
+        window.startPress = (id, name) => {
+            isLongPress = false;
+            pressTimer = setTimeout(async () => {
+                isLongPress = true;
+                if (confirm(`「${name}」を削除しますか？`)) {
+                    const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
+                    await deleteDoc(docRef);
+                }
+            }, 1500); 
+        };
+
+        window.cancelPress = () => clearTimeout(pressTimer);
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const colRef = collection(db, "users", user.uid, "whiskies");
-                const q = query(colRef, orderBy("createdAt", "desc"));
-
+                const q = query(collection(db, "users", user.uid, "whiskies"), orderBy("createdAt", "desc"));
                 onSnapshot(q, (snapshot) => {
                     const data = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                     document.getElementById('stats').innerText = "STOCK: " + data.length;
@@ -110,9 +101,9 @@
                             return `
                             <div class="whisky-card p-5 rounded-lg flex justify-between items-center shadow-lg" 
                                  onmousedown="startPress('${w.id}', '${w.name}')" 
-                                 onmouseup="cancelPress('${w.id}', ${rem})" 
+                                 onmouseup="handleAction('${w.id}', ${rem}, '${w.name}'); cancelPress()" 
                                  ontouchstart="startPress('${w.id}', '${w.name}')" 
-                                 ontouchend="cancelPress('${w.id}', ${rem})">
+                                 ontouchend="handleAction('${w.id}', ${rem}, '${w.name}'); cancelPress()">
                                 <div class="flex-1 pr-4">
                                     <h3 class="font-bold text-slate-800 break-all leading-tight">${w.name}</h3>
                                     <p class="text-[9px] text-slate-400 mt-1 uppercase font-mono tracking-tighter">
@@ -135,7 +126,7 @@
         });
 
         document.getElementById('addBtn').onclick = async () => {
-            const name = prompt("銘柄名を入力してください");
+            const name = prompt("ウイスキーの銘柄名を入力してください");
             if (name && auth.currentUser) {
                 try {
                     await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
