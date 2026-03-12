@@ -135,25 +135,24 @@
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 
+                // Common event handlers for long press
+                const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
+
                 if (w.isWish) {
                     return `
-                    <div class="whisky-card p-6 wish-card relative">
+                    <div class="whisky-card p-6 wish-card relative" ${pressEvents}>
                         <div class="flex justify-between items-center">
                             <div class="flex-1">
                                 <span class="tag mb-2 inline-block">${catDisp}</span>
                                 <h3 class="font-black text-xl tracking-tighter">${w.name}</h3>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <button onclick="moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-4 py-2 rounded-xl shadow-lg active:scale-95">GET!</button>
-                                <button onclick="deleteWish('${w.id}')" class="w-8 h-8 bg-slate-700 rounded-full text-[10px] border border-white/10 flex items-center justify-center">✕</button>
-                            </div>
+                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90">GET!</button>
                         </div>
                     </div>`;
                 }
 
                 return `
-                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}"
-                     onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()">
+                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
                     <div class="flex justify-between items-start mb-1 pr-16">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
@@ -178,13 +177,12 @@
         };
 
         window.moveToShelf = async (id) => {
-            if(confirm("SHELF（在庫）に移動しますか？")) {
+            if(confirm("在庫(SHELF)に移動しますか？")) {
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 });
                 switchPage('shelf');
             }
         };
 
-        window.deleteWish = async (id) => { if(confirm("リストから削除しますか？")) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); };
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
 
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editCatTargetName').innerText = name; showModal(categories); };
@@ -230,7 +228,14 @@
         };
 
         let pressTimer;
-        window.startPress = (id, name) => pressTimer = setTimeout(async () => { if(confirm(`Delete "${name}"?`)) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); }, 800);
+        window.startPress = (id, name) => {
+            cancelPress();
+            pressTimer = setTimeout(async () => { 
+                if(confirm(`"${name}" を削除しますか？`)) {
+                    await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id));
+                }
+            }, 800);
+        };
         window.cancelPress = () => clearTimeout(pressTimer);
 
         onAuthStateChanged(auth, async (user) => {
