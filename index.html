@@ -9,44 +9,44 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* 基本のカード設定 */
-        .whisky-card { background: #fff; border-radius: 12px; border-left: 8px solid #4b5563; color: #1e293b; user-select: none; }
+        /* 基本のカード設定：全周枠線を追加 */
+        .whisky-card { background: #fff; border-radius: 16px; border: 2px solid #e2e8f0; color: #1e293b; user-select: none; transition: all 0.2s; }
         
-        /* カテゴリー別の配色（左ラインとスライダーの色） */
-        .cat-スコッチ { border-left-color: #3b82f6; } /* 青 */
+        /* カテゴリー別の配色（枠線と背景の塗り） */
+        .cat-スコッチ { border-color: #3b82f6; background-color: #eff6ff; }
         .cat-スコッチ input[type=range]::-webkit-slider-thumb { background: #3b82f6; }
         
-        .cat-ジャパニーズ { border-left-color: #ef4444; } /* 赤 */
+        .cat-ジャパニーズ { border-color: #ef4444; background-color: #fef2f2; }
         .cat-ジャパニーズ input[type=range]::-webkit-slider-thumb { background: #ef4444; }
         
-        .cat-アイリッシュ { border-left-color: #10b981; } /* 緑 */
+        .cat-アイリッシュ { border-color: #10b981; background-color: #f0fdf4; }
         .cat-アイリッシュ input[type=range]::-webkit-slider-thumb { background: #10b981; }
         
-        .cat-アメリカン { border-left-color: #f59e0b; } /* オレンジ */
+        .cat-アメリカン { border-color: #f59e0b; background-color: #fffbeb; }
         .cat-アメリカン input[type=range]::-webkit-slider-thumb { background: #f59e0b; }
         
-        .cat-カナディアン { border-left-color: #8b5cf6; } /* 紫 */
+        .cat-カナディアン { border-color: #8b5cf6; background-color: #f5f3ff; }
         .cat-カナディアン input[type=range]::-webkit-slider-thumb { background: #8b5cf6; }
         
-        .cat-その他 { border-left-color: #6b7280; } /* グレー */
+        .cat-その他 { border-color: #6b7280; background-color: #f9fafb; }
         .cat-その他 input[type=range]::-webkit-slider-thumb { background: #6b7280; }
 
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: bold; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .tag { font-size: 10px; padding: 3px 10px; border-radius: 99px; font-weight: bold; background: rgba(255,255,255,0.8); color: #1e293b; border: 1px solid rgba(0,0,0,0.1); }
         
-        input[type=range] { -webkit-appearance: none; background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input[type=range] { -webkit-appearance: none; background: rgba(0,0,0,0.05); height: 8px; border-radius: 4px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
         
         #catModal { display: none; }
         #catModal.active { display: flex; }
         
-        .category-btn { width: 100%; padding: 14px; margin-bottom: 8px; border-radius: 12px; font-weight: bold; font-size: 1rem; border: 2px solid transparent; transition: all 0.2s; text-align: center; color: white; }
+        .category-btn { width: 100%; padding: 16px; margin-bottom: 10px; border-radius: 16px; font-weight: bold; font-size: 1.1rem; color: white; transition: all 0.2s; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-スコッチ { background: #3b82f6; }
         .btn-ジャパニーズ { background: #ef4444; }
         .btn-アイリッシュ { background: #10b981; }
         .btn-アメリカン { background: #f59e0b; }
         .btn-カナディアン { background: #8b5cf6; }
         .btn-その他 { background: #6b7280; }
-        .category-btn:active { transform: scale(0.95); filter: brightness(1.2); }
+        .category-btn:active { transform: scale(0.94); filter: brightness(1.1); }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 overflow-x-hidden">
@@ -56,7 +56,7 @@
             <div id="stats" class="absolute right-4 top-7 text-[10px] border border-amber-600 px-2 py-0.5 rounded text-amber-500 font-mono">STOCK: 0</div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-4 pb-32"></main>
+        <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-5 pb-32"></main>
 
         <div id="catModal" class="fixed inset-0 z-50 bg-black/80 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-white text-slate-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl">
@@ -90,7 +90,7 @@
         const db = getFirestore(app);
         let items = [];
         let tempName = "";
-        let editTargetId = null; // 編集中のID
+        let editTargetId = null;
 
         const categories = ["スコッチ", "ジャパニーズ", "アイリッシュ", "アメリカン", "カナディアン", "その他"];
 
@@ -111,10 +111,9 @@
             await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
         };
 
-        // カテゴリー変更用モーダルを開く
         window.openCategoryEdit = (id, currentName) => {
             editTargetId = id;
-            tempName = ""; // 新規作成ではない目印
+            tempName = "";
             document.getElementById('modalTitle').innerText = `${currentName} の分類変更`;
             document.getElementById('catModal').classList.add('active');
         };
@@ -136,23 +135,23 @@
                 items = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 document.getElementById('stats').innerText = "STOCK: " + items.length;
                 document.getElementById('whiskyList').innerHTML = items.map((w, i) => `
-                    <div class="whisky-card p-5 shadow-lg relative cat-${w.category || 'その他'}" 
+                    <div class="whisky-card p-5 shadow-xl relative cat-${w.category || 'その他'}" 
                          onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
                          ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${w.category || 'その他'} ✎</span>
-                                <h3 class="font-bold text-xl mt-2 tracking-tight">${w.name}</h3>
+                                <h3 class="font-bold text-xl mt-3 tracking-tight text-slate-900">${w.name}</h3>
                             </div>
-                            <div class="text-amber-900 font-black text-2xl">${w.remaining ?? 100}%</div>
+                            <div class="text-slate-900 font-black text-2xl">${w.remaining ?? 100}%</div>
                         </div>
                         <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
                                oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-2xl').innerText=this.value+'%'"
                                onchange="updateStock('${w.id}', this.value)"
                                onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
                         <div class="absolute right-2 bottom-2 flex space-x-1">
-                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-10 h-10 bg-slate-100 rounded-lg text-sm font-bold">▲</button>
-                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-10 h-10 bg-slate-100 rounded-lg text-sm font-bold">▼</button>
+                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-10 h-10 bg-white/60 backdrop-blur-sm rounded-xl text-sm font-bold shadow-sm active:bg-white">▲</button>
+                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-10 h-10 bg-white/60 backdrop-blur-sm rounded-xl text-sm font-bold shadow-sm active:bg-white">▼</button>
                         </div>
                     </div>
                 `).join('');
@@ -162,11 +161,9 @@
         window.selectCategory = async (category) => {
             document.getElementById('catModal').classList.remove('active');
             if (editTargetId) {
-                // カテゴリー変更の場合
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category });
                 editTargetId = null;
             } else if (tempName) {
-                // 新規登録の場合
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
                     name: tempName, category, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
                 });
