@@ -1,5 +1,3 @@
-# whisky-stock
-ウイスキー在庫管理
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -74,5 +72,3 @@ import { getFirestore, collection, addDoc, onSnapshot } from "https://www.google
 &lt;/script&gt;
 </body>
 </html>
-
-
