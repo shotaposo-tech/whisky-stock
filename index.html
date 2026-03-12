@@ -14,14 +14,27 @@
             font-weight: 900; 
         }
         .whisky-card { 
-            transition: transform 0.1s, opacity 0.3s; 
             background: linear-gradient(145deg, #ffffff, #f0f0f0); 
             border-left: 4px solid #b38728; 
             color: #1e293b;
-            cursor: pointer;
             user-select: none;
         }
-        .whisky-card:active { transform: scale(0.96); opacity: 0.8; }
+        /* スライドバー（Range）のカスタムデザイン */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: #b45309; /* amber-700 */
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100">
@@ -44,7 +57,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-        // 新しいConfigを反映
         const firebaseConfig = {
             apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
             authDomain: "my-whisky-app.firebaseapp.com",
@@ -60,27 +72,21 @@
         const db = getFirestore(app);
 
         let pressTimer;
-        let isLongPress = false;
 
-        // 5%ずつ減らす
-        window.handleAction = async (id, current, name) => {
-            if (!isLongPress) {
-                const next = current <= 0 ? 100 : current - 5;
-                const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
-                await updateDoc(docRef, { remaining: next });
-            }
+        // スライドバーで残量を更新
+        window.updateStock = async (id, val) => {
+            const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
+            await updateDoc(docRef, { remaining: parseInt(val) });
         };
 
-        // 1.5秒の長押し判定
+        // 0.8秒の長押し削除
         window.startPress = (id, name) => {
-            isLongPress = false;
             pressTimer = setTimeout(async () => {
-                isLongPress = true;
                 if (confirm(`「${name}」を削除しますか？`)) {
                     const docRef = doc(db, "users", auth.currentUser.uid, "whiskies", id);
                     await deleteDoc(docRef);
                 }
-            }, 1500); 
+            }, 800); 
         };
 
         window.cancelPress = () => clearTimeout(pressTimer);
@@ -99,22 +105,25 @@
                         listEl.innerHTML = data.map(w => {
                             const rem = w.remaining !== undefined ? w.remaining : 100;
                             return `
-                            <div class="whisky-card p-5 rounded-lg flex justify-between items-center shadow-lg" 
+                            <div class="whisky-card p-5 rounded-lg shadow-lg" 
                                  onmousedown="startPress('${w.id}', '${w.name}')" 
-                                 onmouseup="handleAction('${w.id}', ${rem}, '${w.name}'); cancelPress()" 
+                                 onmouseup="cancelPress()" 
                                  ontouchstart="startPress('${w.id}', '${w.name}')" 
-                                 ontouchend="handleAction('${w.id}', ${rem}, '${w.name}'); cancelPress()">
-                                <div class="flex-1 pr-4">
-                                    <h3 class="font-bold text-slate-800 break-all leading-tight">${w.name}</h3>
-                                    <p class="text-[9px] text-slate-400 mt-1 uppercase font-mono tracking-tighter">
-                                        ${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'No Date'}
-                                    </p>
-                                </div>
-                                <div class="flex flex-col items-end">
-                                    <div class="text-amber-900 font-black text-2xl">${rem}<span class="text-xs ml-0.5">%</span></div>
-                                    <div class="w-16 h-1 bg-slate-200 rounded-full mt-1 overflow-hidden">
-                                        <div class="h-full bg-amber-600 transition-all duration-300" style="width: ${rem}%"></div>
+                                 ontouchend="cancelPress()">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex-1 pr-4">
+                                        <h3 class="font-bold text-slate-800 break-all leading-tight text-lg">${w.name}</h3>
+                                        <p class="text-[9px] text-slate-400 mt-1 uppercase font-mono">${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : ''}</p>
                                     </div>
+                                    <div class="text-amber-900 font-black text-2xl">${rem}%</div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <input type="range" min="0" max="100" step="5" value="${rem}" 
+                                           class="w-full h-2 cursor-pointer"
+                                           oninput="this.parentElement.previousElementSibling.querySelector('.text-2xl').innerText = this.value + '%'"
+                                           onchange="updateStock('${w.id}', this.value)"
+                                           onmousedown="event.stopPropagation()"
+                                           ontouchstart="event.stopPropagation()">
                                 </div>
                             </div>`;
                         }).join('');
