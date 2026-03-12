@@ -130,8 +130,8 @@
             if (currentPage !== 'wish') {
                 filtered.sort((a, b) => {
                     if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
-                    if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0); // 度数は高い順
-                    if (currentSort === 'remaining') return a.remaining - b.remaining; // 残量は少ない順(昇順)
+                    if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                    if (currentSort === 'remaining') return a.remaining - b.remaining; // 少ない順
                     if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
                     return 0;
                 });
@@ -141,6 +141,11 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
                 const isArchive = currentPage === 'archive';
+                
+                // 度数表示のチップ：アーカイブでない時のみ表示
+                const abvBadge = !isArchive 
+                    ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` 
+                    : '';
 
                 if (w.isWish) {
                     return `
@@ -161,7 +166,7 @@
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                                ${!isArchive ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` : ''}
+                                ${abvBadge}
                             </div>
                             <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                         </div>
