@@ -2,101 +2,60 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Whisky Stock ウイスキー在庫管理</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Whisky Stock</title>
 <script src="https://www.google.com/search?q=https://cdn.tailwindcss.com"></script>
-<style>
-body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
-.whisky-card { transition: transform 0.1s; }
-.whisky-card:active { transform: scale(0.98); }
-</style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-<div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
-<header class="bg-white border-b px-6 py-5 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-<div>
-<h1 class="text-xl font-black text-amber-900 leading-none italic">Whisky Stock</h1>
-<p class="text-xs text-amber-700 mt-1 font-bold">ウイスキー在庫管理</p>
-</div>
-<div id="stats" class="text-sm bg-amber-50 text-amber-900 px-3 py-1 rounded-full font-bold border border-amber-100">0本</div>
+<body class="bg-slate-50">
+<div id="app" class="max-w-md mx-auto min-h-screen p-4">
+<header class="flex justify-between items-center mb-6">
+<h1 class="text-xl font-bold text-amber-900">Whisky Stock</h1>
+<div id="stats" class="bg-amber-100 px-3 py-1 rounded-full text-sm font-bold">0本</div>
 </header>
-    <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-3 pb-32">
-        <div class="flex flex-col justify-center items-center py-20 text-slate-400">
-            <div class="animate-spin h-8 w-8 border-4 border-amber-700 rounded-full border-t-transparent mb-4"></div>
-            <p class="text-sm font-bold">サーバーに接続中...</p>
-        </div>
-    </main>
-
-    <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-amber-800 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-20 active:bg-amber-900 transition-colors border-4 border-white">
-        <span class="mb-1">＋</span>
-    </button>
+<div id="whiskyList" class="space-y-3"></div>
+<button id="addBtn" class="fixed bottom-8 right-6 w-14 h-14 bg-amber-800 text-white rounded-full shadow-lg text-3xl">+</button>
 </div>
-
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MXu_fE_6_R-o",
-        authDomain: "my-whisky-app.firebaseapp.com",
-        projectId: "my-whisky-app",
-        storageBucket: "my-whisky-app.firebasestorage.app",
-        messagingSenderId: "599572459740",
-        appId: "1:599572459740:web:9f8e4e7e6f8a4e7e6f8a4e" 
-    };
+import { initializeApp } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+const firebaseConfig = {
+apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MXu_fE_6_R-o",
+authDomain: "https://www.google.com/search?q=my-whisky-app.firebaseapp.com",
+projectId: "my-whisky-app",
+storageBucket: "my-whisky-app.firebasestorage.app",
+messagingSenderId: "599572459740",
+appId: "1:599572459740:web:9f8e4e7e6f8a4e7e6f8a4e"
+};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const colRef = collection(db, "users", user.uid, "whiskies");
-            onSnapshot(colRef, (snapshot) => {
-                const data = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                document.getElementById('stats').innerText = `${data.length}本`;
-                const listEl = document.getElementById('whiskyList');
-                if (data.length === 0) {
-                    listEl.innerHTML = '<div class="text-center py-20"><div class="text-6xl mb-6 opacity-20">🥃</div><p class="text-slate-400 font-bold">まだ登録がありません</p></div>';
-                } else {
-                    listEl.innerHTML = data.map(w => `
-                        <div class="whisky-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between text-left">
-                            <div class="flex-1 pr-4">
-                                <h3 class="font-bold text-lg text-slate-800 break-all leading-tight">${w.name}</h3>
-                                <p class="text-[10px] text-slate-400 mt-1">${new Date(w.createdAt).toLocaleDateString()}</p>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <div class="flex items-baseline text-amber-800 font-black text-2xl">
-                                    <span>${w.remaining || 100}</span>
-                                    <span class="text-xs font-bold ml-0.5">%</span>
-                                </div>
-                                <div class="w-16 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
-                                    <div class="h-full bg-amber-600" style="width: ${w.remaining || 100}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            });
-        } else {
-            await signInAnonymously(auth);
-        }
-    });
-
-    document.getElementById('addBtn').onclick = async () => {
-        const name = prompt("銘柄名を入力してください");
-        if (name && auth.currentUser) {
-            try {
-                await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                    name: name,
-                    remaining: 100,
-                    createdAt: Date.now()
-                });
-            } catch (e) {
-                alert("保存に失敗しました。");
-            }
-        }
-    };
+onAuthStateChanged(auth, async (user) => {
+if (!user) { await signInAnonymously(auth); return; }
+const colRef = collection(db, "users", user.uid, "whiskies");
+onSnapshot(colRef, (snapshot) => {
+const data = snapshot.docs.map(d => d.data());
+document.getElementById('stats').innerText = data.length + "本";
+const listEl = document.getElementById('whiskyList');
+if (data.length === 0) {
+listEl.innerHTML = '<p class="text-center py-10 text-slate-400">ボトルがありません</p>';
+} else {
+listEl.innerHTML = data.map(w => `
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
+<div class="font-bold text-slate-800">{w.name}&lt;/div&gt;
+&lt;div class=&quot;text-amber-800 font-bold&quot;&gt;{w.remaining}%</div>
+</div>`).join('');
+}
+});
+});
+document.getElementById('addBtn').onclick = async () => {
+const name = prompt("銘柄名を入力してください");
+if (name && auth.currentUser) {
+await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
+name: name, remaining: 100, createdAt: Date.now()
+});
+}
+};
 </script>
 </body>
 </html>
