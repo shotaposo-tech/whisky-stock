@@ -10,32 +10,24 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
-
-        /* Category Colors */
         .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
         .btn-Japanese, .cat-Japanese { border-color: #064e3b; background: linear-gradient(135deg, #064e3b, #065f46); } 
         .btn-Irish, .cat-Irish { border-color: #10b981; background: linear-gradient(135deg, #10b981, #059669); } 
         .btn-American, .cat-American { border-color: #f59e0b; background: linear-gradient(135deg, #d97706, #b45309); } 
         .btn-Blended, .cat-Blended { border-color: #94a3b8; background: linear-gradient(135deg, #475569, #1e293b); }
         .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
-
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; }
-
         .slider-container { width: calc(100% - 75px); margin-top: 14px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; }
-        
         .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
-
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
         .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
-
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
     </style>
@@ -131,7 +123,7 @@
                 filtered.sort((a, b) => {
                     if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
                     if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                    if (currentSort === 'remaining') return a.remaining - b.remaining; // 少ない順
+                    if (currentSort === 'remaining') return a.remaining - b.remaining;
                     if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
                     return 0;
                 });
@@ -140,10 +132,12 @@
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
-                const isArchive = currentPage === 'archive';
                 
-                // 度数表示のチップ：アーカイブでない時のみ表示
-                const abvBadge = !isArchive 
+                // 【修正】現在の表示アイテムがARCHIVE条件に合うかを厳格に判定
+                const isArchiveCard = (w.remaining <= 0 && !w.isWish);
+                
+                // ARCHIVEカードの場合は度数バッジを生成しない
+                const abvBadge = !isArchiveCard 
                     ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` 
                     : '';
 
@@ -161,7 +155,7 @@
                 }
 
                 return `
-                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${isArchive ? 'archive-card' : ''}" ${pressEvents}>
+                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${isArchiveCard ? 'archive-card' : ''}" ${pressEvents}>
                     <div class="flex justify-between items-start mb-1 pr-16">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
@@ -189,21 +183,17 @@
             const n = prompt(`銘柄名を編集`, old);
             if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n });
         };
-
         window.editAbv = async (id, name, old) => {
             const n = prompt(`"${name}" のアルコール度数を入力`, old);
             if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 0 });
         };
-
         window.moveToShelf = async (id) => {
             if(confirm("在庫(SHELF)に移動しますか？")) {
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 });
                 switchPage('shelf');
             }
         };
-
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
-
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editCatTargetName').innerText = name; showModal(categories); };
         const showModal = (opts, isReg = false) => {
             const m = document.getElementById('modal');
@@ -215,10 +205,8 @@
             `).join('');
             m.classList.add('active');
         };
-
         window.selectCat = (c) => c === "Scotch" ? showModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
-        
         const finalize = async (c, r) => {
             if (editTargetId) {
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
@@ -231,9 +219,7 @@
             }
             closeModal();
         };
-
         window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
-
         window.moveItem = async (index, direction) => {
             if (currentSort !== 'sortOrder') return;
             const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0 && !w.isWish) : (w.remaining <= 0 && !w.isWish));
@@ -246,7 +232,6 @@
             newItems.forEach((item, idx) => batch.update(doc(db, "users", auth.currentUser.uid, "whiskies", item.id), { sortOrder: idx * 10 }));
             await batch.commit();
         };
-
         let pressTimer;
         window.startPress = (id, name) => {
             cancelPress();
@@ -257,7 +242,6 @@
             }, 800);
         };
         window.cancelPress = () => clearTimeout(pressTimer);
-
         onAuthStateChanged(auth, async (user) => {
             if (!user) { await signInAnonymously(auth); return; }
             onSnapshot(query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
@@ -265,7 +249,6 @@
                 render();
             });
         });
-
         document.getElementById('addBtn').onclick = () => {
             const n = prompt(currentPage === 'wish' ? "欲しい銘柄を入力" : "新しいボトル名を入力");
             if (n) { tempName = n; editTargetId = null; document.getElementById('editCatTargetName').innerText = n; showModal(categories); }
