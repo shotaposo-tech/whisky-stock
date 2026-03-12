@@ -98,20 +98,21 @@
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
             
-            const sortBar = document.getElementById('sort-bar');
             const abvBtn = document.getElementById('sort-abv');
+            const stockBtn = document.getElementById('sort-remaining');
 
+            // WISH LISTでもソートバーは表示するが、STOCKソートボタンだけは不要なので隠す
             if (page === 'wish') {
-                sortBar.style.display = 'none';
+                abvBtn.style.display = 'inline-block';
+                stockBtn.style.display = 'none';
+                if (currentSort === 'remaining') setSort('sortOrder');
+            } else if (page === 'archive') {
+                abvBtn.style.display = 'none';
+                stockBtn.style.display = 'inline-block';
+                if (currentSort === 'abv') setSort('sortOrder');
             } else {
-                sortBar.style.display = 'flex';
-                // 【修正】ARCHIVEタブの時だけABVソートボタンを隠す
-                if (page === 'archive') {
-                    abvBtn.style.display = 'none';
-                    if (currentSort === 'abv') setSort('sortOrder'); // ABVソート中ならCUSTOMに戻す
-                } else {
-                    abvBtn.style.display = 'inline-block';
-                }
+                abvBtn.style.display = 'inline-block';
+                stockBtn.style.display = 'inline-block';
             }
             render();
         };
@@ -134,32 +135,39 @@
                 return false;
             });
 
-            if (currentPage !== 'wish') {
-                filtered.sort((a, b) => {
-                    if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
-                    if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                    if (currentSort === 'remaining') return a.remaining - b.remaining;
-                    if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
-                    return 0;
-                });
-            }
+            // 全てのページでソートを有効化
+            filtered.sort((a, b) => {
+                if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
+                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                if (currentSort === 'remaining') return a.remaining - b.remaining;
+                if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
+                return 0;
+            });
 
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
                 
-                // ボトル内のABVチップは全タブで表示
-                const abvBadge = `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>`;
+                // 度数バッジ：Archiveのソート時のみ非表示
+                const showAbv = !(currentPage === 'archive');
+                const abvBadge = showAbv ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` : '';
 
                 if (w.isWish) {
                     return `
                     <div class="whisky-card p-6 wish-card relative" ${pressEvents}>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center pr-12">
                             <div class="flex-1">
-                                <span class="tag mb-2 inline-block">${catDisp}</span>
-                                <h3 class="font-black text-xl tracking-tighter">${w.name}</h3>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                                    ${abvBadge}
+                                </div>
+                                <h3 class="font-black text-xl tracking-tighter break-all" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                             </div>
-                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90">GET!</button>
+                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-2">GET!</button>
+                        </div>
+                        <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
+                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button>
+                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▼</button>
                         </div>
                     </div>`;
                 }
@@ -182,8 +190,8 @@
                                onchange="updateStock('${w.id}', this.value)">
                     </div>
                     <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
-                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg">▲</button>
-                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg">▼</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▼</button>
                     </div>
                 </div>`;
             }).join('');
@@ -218,11 +226,11 @@
         window.selectCat = (c) => c === "Scotch" ? showModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
         const finalize = async (c, r) => {
+            const abvInput = prompt(`アルコール度数(%)を入力してください`, "40");
             if (editTargetId) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
+                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r, abv: parseFloat(abvInput) || 40 });
             } else {
-                const isWish = currentPage === 'wish';
-                const abvInput = isWish ? 40 : prompt(`アルコール度数(%)を入力してください`, "40");
+                const isWish = (currentPage === 'wish');
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
                     name: tempName, category: c, region: r, abv: parseFloat(abvInput) || 40, remaining: 100, isWish: isWish, sortOrder: items.length * 10
                 });
@@ -232,10 +240,23 @@
         window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
         window.moveItem = async (index, direction) => {
             if (currentSort !== 'sortOrder') return;
-            const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0 && !w.isWish) : (w.remaining <= 0 && !w.isWish));
+            const filtered = items.filter(w => {
+                if (currentPage === 'shelf') return w.remaining > 0 && !w.isWish;
+                if (currentPage === 'archive') return w.remaining <= 0 && !w.isWish;
+                if (currentPage === 'wish') return w.isWish === true;
+                return false;
+            });
             const overallIndex = items.findIndex(item => item.id === filtered[index].id);
-            const targetOverallIndex = overallIndex + direction;
-            if (targetOverallIndex < 0 || targetOverallIndex >= items.length) return;
+            const targetOverallIndex = items.findIndex((item, idx) => {
+                if (direction < 0) return idx < overallIndex && items.slice(0, overallIndex).reverse().find(i => 
+                    (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? (i.remaining > 0 && !i.isWish) : (i.remaining <= 0 && !i.isWish)))
+                ) === item;
+                return idx > overallIndex && items.slice(overallIndex + 1).find(i => 
+                    (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? (i.remaining > 0 && !i.isWish) : (i.remaining <= 0 && !i.isWish)))
+                ) === item;
+            });
+
+            if (targetOverallIndex === -1) return;
             const newItems = [...items];
             [newItems[overallIndex], newItems[targetOverallIndex]] = [newItems[targetOverallIndex], newItems[overallIndex]];
             const batch = writeBatch(db);
