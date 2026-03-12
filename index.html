@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Whisky Stock ウイスキー在庫管理</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.google.com/search?q=https://cdn.tailwindcss.com"></script>
 <style>
 body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
 .whisky-card { transition: transform 0.1s; }
@@ -20,40 +20,62 @@ body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, san
 </div>
 <div id="stats" class="text-sm bg-amber-50 text-amber-900 px-3 py-1 rounded-full font-bold border border-amber-100">0本</div>
 </header>
+    <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-3 pb-32">
+        <div class="flex flex-col justify-center items-center py-20 text-slate-400">
+            <div class="animate-spin h-8 w-8 border-4 border-amber-700 rounded-full border-t-transparent mb-4"></div>
+            <p class="text-sm font-bold">サーバーに接続中...</p>
+        </div>
+    </main>
+
+    <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-amber-800 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-20 active:bg-amber-900 transition-colors border-4 border-white">
+        <span class="mb-1">＋</span>
+    </button>
+</div>
+
 <script type="module">
-import { initializeApp } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.google.com/search?q=https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
     const firebaseConfig = {
-        apiKey: &quot;AIzaSyAk41dGtCDcDGMmvXmknE6MXu_fE_6_R-o&quot;,
-        authDomain: &quot;my-whisky-app.firebaseapp.com&quot;,
-        projectId: &quot;my-whisky-app&quot;,
-        storageBucket: &quot;my-whisky-app.firebasestorage.app&quot;,
-        messagingSenderId: &quot;599572459740&quot;,
-        appId: &quot;1:599572459740:web:9f8e4e7e6f8a4e7e6f8a4e&quot; 
+        apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MXu_fE_6_R-o",
+        authDomain: "my-whisky-app.firebaseapp.com",
+        projectId: "my-whisky-app",
+        storageBucket: "my-whisky-app.firebasestorage.app",
+        messagingSenderId: "599572459740",
+        appId: "1:599572459740:web:9f8e4e7e6f8a4e7e6f8a4e" 
     };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    onAuthStateChanged(auth, async (user) =&gt; {
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const colRef = collection(db, &quot;users&quot;, user.uid, &quot;whiskies&quot;);
-            onSnapshot(colRef, (snapshot) =&gt; {
-                const data = snapshot.docs.map(d =&gt; ({id: d.id, ...d.data()}));
-                data.sort((a, b) =&gt; b.createdAt - a.createdAt);
-                document.getElementById(&#39;stats&#39;).innerText = `${data.length}本`;
-                const listEl = document.getElementById(&#39;whiskyList&#39;);
+            const colRef = collection(db, "users", user.uid, "whiskies");
+            onSnapshot(colRef, (snapshot) => {
+                const data = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                document.getElementById('stats').innerText = `${data.length}本`;
+                const listEl = document.getElementById('whiskyList');
                 if (data.length === 0) {
-                    listEl.innerHTML = &#39;&lt;div class=&quot;py-20 text-slate-400&quot;&gt;ボトルがありません&lt;/div&gt;&#39;;
+                    listEl.innerHTML = '<div class="text-center py-20"><div class="text-6xl mb-6 opacity-20">🥃</div><p class="text-slate-400 font-bold">まだ登録がありません</p></div>';
                 } else {
-                    listEl.innerHTML = data.map(w =&gt; `
-                        &lt;div class=&quot;bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between text-left&quot;&gt;
-                            &lt;div&gt;&lt;h3 class=&quot;font-bold text-lg&quot;&gt;${w.name}&lt;/h3&gt;&lt;/div&gt;
-                            &lt;div class=&quot;text-amber-800 font-bold text-xl&quot;&gt;${w.remaining || 100}%&lt;/div&gt;
-                        &lt;/div&gt;
-                    `).join(&#39;&#39;);
+                    listEl.innerHTML = data.map(w => `
+                        <div class="whisky-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between text-left">
+                            <div class="flex-1 pr-4">
+                                <h3 class="font-bold text-lg text-slate-800 break-all leading-tight">${w.name}</h3>
+                                <p class="text-[10px] text-slate-400 mt-1">${new Date(w.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <div class="flex items-baseline text-amber-800 font-black text-2xl">
+                                    <span>${w.remaining || 100}</span>
+                                    <span class="text-xs font-bold ml-0.5">%</span>
+                                </div>
+                                <div class="w-16 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                                    <div class="h-full bg-amber-600" style="width: ${w.remaining || 100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
                 }
             });
         } else {
@@ -61,16 +83,20 @@ import { getFirestore, collection, addDoc, onSnapshot } from "https://www.google
         }
     });
 
-    document.getElementById(&#39;addBtn&#39;).onclick = async () =&gt; {
-        const name = prompt(&quot;銘柄名を入力してください&quot;);
-        if (name &amp;&amp; auth.currentUser) {
-            await addDoc(collection(db, &quot;users&quot;, auth.currentUser.uid, &quot;whiskies&quot;), {
-                name: name,
-                remaining: 100,
-                createdAt: Date.now()
-            });
+    document.getElementById('addBtn').onclick = async () => {
+        const name = prompt("銘柄名を入力してください");
+        if (name && auth.currentUser) {
+            try {
+                await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
+                    name: name,
+                    remaining: 100,
+                    createdAt: Date.now()
+                });
+            } catch (e) {
+                alert("保存に失敗しました。");
+            }
         }
     };
-&lt;/script&gt;
+</script>
 </body>
 </html>
