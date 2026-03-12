@@ -3,44 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>Whisky Stock ウイスキー在庫管理</title>
+    <title>Whisky Stock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
-        .gold-text { 
-            background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            font-weight: 900; 
-        }
-        .whisky-card { 
-            background: linear-gradient(145deg, #ffffff, #f0f0f0); 
-            border-left: 4px solid #b38728; 
-            color: #1e293b;
-            user-select: none;
-        }
-        input[type=range] { -webkit-appearance: none; background: #e2e8f0; height: 8px; border-radius: 4px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background: #b45309; height: 20px; width: 20px; border-radius: 50%; border: 2px solid white; }
+        .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+        .whisky-card { background: #fff; border-radius: 12px; border-left: 6px solid #b38728; color: #1e293b; user-select: none; transition: all 0.2s; }
+        .category-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: bold; }
+        input[type=range] { -webkit-appearance: none; background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; background: #b45309; height: 18px; width: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
-        <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-6 sticky top-0 z-10 shadow-xl text-center">
-            <h1 class="text-3xl italic gold-text tracking-tighter">Whisky Stock</h1>
+        <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-6 sticky top-0 z-20 text-center">
+            <h1 class="text-2xl italic gold-text">Whisky Stock</h1>
             <div id="stats" class="absolute right-4 top-7 text-[10px] border border-amber-600 px-2 py-0.5 rounded text-amber-500 font-mono">STOCK: 0</div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 mt-8 space-y-4 pb-32"></main>
+        <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-4 pb-32"></main>
 
-        <button id="addBtn" class="fixed bottom-10 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 via-amber-700 to-amber-500 text-white rounded-full shadow-lg flex items-center justify-center text-4xl z-20 active:scale-95 border-2 border-amber-200/30">
-            <span class="mb-1">＋</span>
+        <button id="addBtn" class="fixed bottom-10 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90">
+            <span>＋</span>
         </button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
@@ -48,111 +39,84 @@
             projectId: "my-whisky-app",
             storageBucket: "my-whisky-app.firebasestorage.app",
             messagingSenderId: "577760896040",
-            appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d",
-            measurementId: "G-P52P51S24F"
+            appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        let items = [];
 
-        let pressTimer;
-        let whiskies = []; // 全データを保持
+        // 確実な入れ替えロジック
+        window.moveItem = async (index, direction) => {
+            const newItems = [...items];
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= newItems.length) return;
+
+            // 配列内で入れ替え
+            [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
+
+            // Firebaseの全アイテムのsortOrderを一括更新（Batch処理）
+            const batch = writeBatch(db);
+            newItems.forEach((item, idx) => {
+                const ref = doc(db, "users", auth.currentUser.uid, "whiskies", item.id);
+                batch.update(ref, { sortOrder: idx * 10 });
+            });
+            await batch.commit();
+        };
 
         window.updateStock = async (id, val) => {
             await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
         };
 
+        let pressTimer;
         window.startPress = (id, name) => {
             pressTimer = setTimeout(async () => {
                 if (confirm(`「${name}」を削除しますか？`)) {
                     await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id));
                 }
-            }, 800); 
+            }, 800);
         };
         window.cancelPress = () => clearTimeout(pressTimer);
 
-        // --- 入れ替え機能 ---
-        window.moveItem = async (index, direction) => {
-            const targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= whiskies.length) return;
-
-            const itemA = whiskies[index];
-            const itemB = whiskies[targetIndex];
-
-            // 互いの順序（sortOrder）を入れ替える
-            const refA = doc(db, "users", auth.currentUser.uid, "whiskies", itemA.id);
-            const refB = doc(db, "users", auth.currentUser.uid, "whiskies", itemB.id);
-
-            // 片方がsortOrderを持っていない場合（初期化）に備えて現在時刻などを代用
-            const orderA = itemA.sortOrder !== undefined ? itemA.sortOrder : itemA.createdAt;
-            const orderB = itemB.sortOrder !== undefined ? itemB.sortOrder : itemB.createdAt;
-
-            await updateDoc(refA, { sortOrder: orderB });
-            await updateDoc(refB, { sortOrder: orderA });
-        };
-
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // sortOrderで昇順（小さい順）に並べる。無ければcreatedAt順
-                const q = query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc"));
-                onSnapshot(q, (snapshot) => {
-                    whiskies = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                    document.getElementById('stats').innerText = "STOCK: " + whiskies.length;
-                    
-                    const listEl = document.getElementById('whiskyList');
-                    if (whiskies.length === 0) {
-                        listEl.innerHTML = '<div class="text-center py-20 opacity-30 text-amber-200 font-bold"><p>No Collection</p></div>';
-                    } else {
-                        listEl.innerHTML = whiskies.map((w, index) => {
-                            const rem = w.remaining !== undefined ? w.remaining : 100;
-                            return `
-                            <div class="whisky-card p-5 rounded-lg shadow-lg relative" 
-                                 onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
-                                 ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
-                                
-                                <div class="absolute right-2 top-2 flex flex-col space-y-1 z-10">
-                                    <button onclick="event.stopPropagation(); moveItem(${index}, -1)" class="w-8 h-8 bg-white/50 rounded shadow-sm text-amber-900 font-bold text-xs active:bg-amber-200">▲</button>
-                                    <button onclick="event.stopPropagation(); moveItem(${index}, 1)" class="w-8 h-8 bg-white/50 rounded shadow-sm text-amber-900 font-bold text-xs active:bg-amber-200">▼</button>
-                                </div>
-
-                                <div class="flex justify-between items-start mb-4 pr-10">
-                                    <div class="flex-1">
-                                        <h3 class="font-bold text-slate-800 break-all leading-tight text-lg">${w.name}</h3>
-                                        <p class="text-[9px] text-slate-400 mt-1 uppercase font-mono">${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : ''}</p>
-                                    </div>
-                                    <div class="text-amber-900 font-black text-2xl">${rem}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <input type="range" min="0" max="100" step="5" value="${rem}" 
-                                           class="w-full h-2 cursor-pointer"
-                                           oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-2xl').innerText = this.value + '%'"
-                                           onchange="updateStock('${w.id}', this.value)"
-                                           onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
-                                </div>
-                            </div>`;
-                        }).join('');
-                    }
-                });
-            } else {
-                await signInAnonymously(auth);
-            }
+            if (!user) { await signInAnonymously(auth); return; }
+            const q = query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc"));
+            onSnapshot(q, (snap) => {
+                items = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                document.getElementById('stats').innerText = "STOCK: " + items.length;
+                document.getElementById('whiskyList').innerHTML = items.map((w, i) => `
+                    <div class="whisky-card p-4 shadow-md relative" 
+                         onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
+                         ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="category-tag">${w.category || 'その他'}</span>
+                                <h3 class="font-bold text-lg mt-1">${w.name}</h3>
+                            </div>
+                            <div class="text-amber-800 font-black text-xl">${w.remaining ?? 100}%</div>
+                        </div>
+                        <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
+                               oninput="this.closest('.whisky-card').querySelector('.text-xl').innerText=this.value+'%'"
+                               onchange="updateStock('${w.id}', this.value)"
+                               onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                        <div class="absolute right-2 bottom-2 flex space-x-1">
+                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="p-2 bg-slate-100 rounded text-xs opacity-50 active:opacity-100">▲</button>
+                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="p-2 bg-slate-100 rounded text-xs opacity-50 active:opacity-100">▼</button>
+                        </div>
+                    </div>
+                `).join('');
+            });
         });
 
         document.getElementById('addBtn').onclick = async () => {
-            const name = prompt("ウイスキーの銘柄名を入力してください");
-            if (name && auth.currentUser) {
-                try {
-                    // 現在の最大順序を取得して、その次（一番下）に配置
-                    const now = Date.now();
-                    await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                        name: name,
-                        remaining: 100,
-                        createdAt: now,
-                        sortOrder: now // 初期値としてタイムスタンプを使用
-                    });
-                } catch (e) { alert("エラー: " + e.message); }
-            }
+            const name = prompt("銘柄名を入力してください");
+            if (!name) return;
+            const category = prompt("カテゴリーを入力（例：ジャパニーズ、スコッチ、アイラ、バーボン等）", "ジャパニーズ");
+            
+            await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
+                name, category, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
+            });
         };
     </script>
 </body>
