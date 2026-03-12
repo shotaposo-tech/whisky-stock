@@ -24,8 +24,10 @@
         .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; }
-        .shop-btn { font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 6px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; transition: 0.2s; }
-        .shop-btn:active { background: #f59e0b; color: #000; }
+        
+        /* Shop Buttons Style */
+        .shop-btn { font-size: 8px; font-weight: 900; padding: 6px 4px; border-radius: 8px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; flex: 1; text-align: center; }
+        .shop-btn:active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         .slider-container { width: calc(100% - 75px); margin-top: 14px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
@@ -34,8 +36,8 @@
         .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
-        #modal, #flavorModal { display: none; }
-        #modal.active, #flavorModal.active { display: flex; z-index: 100; }
+        #modal { display: none; }
+        #modal.active { display: flex; z-index: 100; }
         .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
 
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
@@ -116,11 +118,12 @@
             render();
         };
 
+        // Improved Search Function with direct URL parameters
         window.searchWhisky = (name, site) => {
-            const q = encodeURIComponent(name + " ウイスキー");
+            const q = encodeURIComponent(name);
             const urls = {
-                amz: `https://www.amazon.co.jp/s?k=${q}`,
-                rkt: `https://search.rakuten.co.jp/search/mall/${q}/`,
+                amz: `https://www.amazon.co.jp/s?k=${q}+%E3%82%A6%E3%82%A4%E3%82%B9%E3%82%AD%E3%83%BC`,
+                rkt: `https://search.rakuten.co.jp/search/mall/${q}+%E3%82%A6%E3%82%A4%E3%82%B9%E3%82%AD%E3%83%BC/`,
                 mgw: `https://mukawa-spirit.com/?mode=srh&keyword=${q}`,
                 snn: `https://www.shinanoya-tokyo.jp/shopbrand/ct834/search?search=${q}`,
                 rdr: `http://rudder-shop.com/shopbrand/ct56/search?search=${q}`
@@ -159,14 +162,14 @@
                             </div>
                             <button onclick="moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-3 py-2 rounded-lg shadow-lg active:scale-95">GET!</button>
                         </div>
-                        <div class="flex flex-wrap gap-1.5 mt-2">
-                            <button onclick="searchWhisky('${w.name}', 'amz')" class="shop-btn">AMAZON</button>
+                        <div class="flex gap-1 mt-2">
+                            <button onclick="searchWhisky('${w.name}', 'amz')" class="shop-btn">AMZ</button>
                             <button onclick="searchWhisky('${w.name}', 'rkt')" class="shop-btn">楽天</button>
                             <button onclick="searchWhisky('${w.name}', 'mgw')" class="shop-btn">武川</button>
                             <button onclick="searchWhisky('${w.name}', 'snn')" class="shop-btn">信濃屋</button>
-                            <button onclick="searchWhisky('${w.name}', 'rdr')" class="shop-btn">RUDDER</button>
+                            <button onclick="searchWhisky('${w.name}', 'rdr')" class="shop-btn">RDR</button>
                         </div>
-                        <button onclick="deleteWish('${w.id}')" class="absolute -right-2 -top-2 w-6 h-6 bg-slate-700 rounded-full text-[10px] border border-white/10">✕</button>
+                        <button onclick="deleteWish('${w.id}')" class="absolute -right-2 -top-2 w-6 h-6 bg-slate-700 rounded-full text-[10px] border border-white/10 flex items-center justify-center">✕</button>
                     </div>`;
                 }
 
@@ -198,13 +201,13 @@
         };
 
         window.moveToShelf = async (id) => {
-            if(confirm("SHELF（在庫）に移動しますか？")) {
+            if(confirm("在庫(SHELF)に移動しますか？")) {
                 await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 });
                 switchPage('shelf');
             }
         };
 
-        window.deleteWish = async (id) => { if(confirm("リストから削除しますか？")) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); };
+        window.deleteWish = async (id) => { if(confirm("削除しますか？")) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); };
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
 
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editCatTargetName').innerText = name; showModal(categories); };
@@ -228,7 +231,7 @@
             } else {
                 const isWish = currentPage === 'wish';
                 await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                    name: tempName, category: c, region: r, abv: 40, remaining: isWish ? 100 : 100, isWish: isWish, sortOrder: items.length * 10
+                    name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: isWish, sortOrder: items.length * 10
                 });
             }
             closeModal();
@@ -261,7 +264,7 @@
         });
 
         document.getElementById('addBtn').onclick = () => {
-            const n = prompt(currentPage === 'wish' ? "欲しいボトルの名前" : "新しいボトルの名前");
+            const n = prompt(currentPage === 'wish' ? "欲しい銘柄を入力" : "新しいボトル名を入力");
             if (n) { tempName = n; editTargetId = null; document.getElementById('editCatTargetName').innerText = n; showModal(categories); }
         };
     </script>
