@@ -3,66 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { border-radius: 16px; border: 3px solid #4b5563; color: white; user-select: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        
-        /* Categories with English identifiers */
-        .cat-Scotch { border-color: #2563eb; background-color: #1d4ed8; }
-        .cat-Scotch input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
-        
-        .cat-Japanese { border-color: #059669; background-color: #047857; }
-        .cat-Japanese input[type=range]::-webkit-slider-thumb { background: #34d399; }
-        
-        .cat-Irish { border-color: #10b981; background-color: #059669; }
-        .cat-Irish input[type=range]::-webkit-slider-thumb { background: #6ee7b7; }
-        
-        .cat-American { border-color: #d97706; background-color: #b45309; }
-        .cat-American input[type=range]::-webkit-slider-thumb { background: #fbbf24; }
-        
-        .cat-Canadian { border-color: #7c3aed; background-color: #6d28d9; }
-        .cat-Canadian input[type=range]::-webkit-slider-thumb { background: #a78bfa; }
-        
-        .cat-Others { border-color: #4b5563; background-color: #374151; }
-        .cat-Others input[type=range]::-webkit-slider-thumb { background: #9ca3af; }
+        .whisky-card { border-radius: 16px; border: 3px solid #4b5563; color: white; user-select: none; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+        .archive-card { filter: grayscale(1) opacity(0.6); border-style: dashed; }
 
-        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 900; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.05em; }
+        /* Categories */
+        .cat-Scotch { border-color: #2563eb; background-color: #1d4ed8; }
+        .cat-Japanese { border-color: #059669; background-color: #047857; }
+        .cat-Irish { border-color: #10b981; background-color: #059669; }
+        .cat-American { border-color: #d97706; background-color: #b45309; }
+        .cat-Canadian { border-color: #7c3aed; background-color: #6d28d9; }
+        .cat-Others { border-color: #4b5563; background-color: #374151; }
+
+        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 900; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; }
+        .flavor-tag { font-size: 11px; padding: 2px 8px; background: rgba(255,255,255,0.15); border-radius: 4px; font-style: italic; border: 1px solid rgba(255,255,255,0.1); }
         
-        .slider-container { width: calc(100% - 55px); }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
         
-        #catModal { display: none; }
-        #catModal.active { display: flex; }
+        #modal, #flavorModal { display: none; }
+        #modal.active, #flavorModal.active { display: flex; }
+        .category-btn { width: 100%; padding: 14px; margin-bottom: 8px; border-radius: 16px; font-weight: 900; color: white; text-align: center; border: 2px solid rgba(255,255,255,0.1); }
         
-        .category-btn { width: 100%; padding: 14px; margin-bottom: 8px; border-radius: 16px; font-weight: 900; font-size: 1rem; color: white; text-align: center; border: 2px solid rgba(255,255,255,0.1); text-transform: capitalize; }
-        .btn-Scotch { background: #2563eb; }
-        .btn-Japanese { background: #059669; }
-        .btn-Irish { background: #10b981; }
-        .btn-American { background: #d97706; }
-        .btn-Canadian { background: #7c3aed; }
-        .btn-Others { background: #4b5563; }
-        .btn-sub { background: #334155; font-size: 0.9rem; }
+        .nav-tab { flex: 1; padding: 12px; font-weight: 900; font-size: 0.8rem; text-align: center; transition: 0.2s; border-bottom: 3px solid transparent; color: #64748b; }
+        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 overflow-x-hidden">
+<body class="text-slate-100 overflow-x-hidden">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
-        <header class="bg-black/80 backdrop-blur-md border-b border-amber-900/50 px-6 py-4 sticky top-0 z-20 text-center">
-            <h1 class="text-xl italic gold-text uppercase tracking-widest">Whisky Stock</h1>
-            <div id="stats" class="absolute right-4 top-5 text-[9px] border border-amber-600 px-2 py-0.5 rounded text-amber-500 font-mono">STOCK: 0</div>
+        <header class="bg-black/90 backdrop-blur-md border-b border-amber-900/50 sticky top-0 z-20">
+            <div class="px-6 py-4 text-center">
+                <h1 class="text-xl italic gold-text uppercase tracking-widest">Whisky Stock</h1>
+            </div>
+            <nav class="flex">
+                <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
+                <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
+            </nav>
         </header>
 
         <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-4 pb-40"></main>
 
-        <div id="catModal" class="fixed inset-0 z-50 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
-            <div class="bg-slate-800 text-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
-                <h2 id="modalTitle" class="text-xl font-black mb-6 text-center tracking-tight">Select Category</h2>
-                <div id="catOptions" class="grid grid-cols-1 gap-1"></div>
-                <button onclick="document.getElementById('catModal').classList.remove('active')" class="mt-6 w-full text-slate-400 text-sm font-bold py-2 uppercase tracking-widest">Cancel</button>
+        <div id="modal" class="fixed inset-0 z-50 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
+            <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
+                <h2 id="modalTitle" class="text-xl font-black mb-6 text-center">Select</h2>
+                <div id="modalOptions" class="grid grid-cols-1"></div>
+                <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
+            </div>
+        </div>
+
+        <div id="flavorModal" class="fixed inset-0 z-50 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
+            <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
+                <h2 class="text-xl font-black mb-6 text-center">Flavor Note</h2>
+                <div id="flavorOptions" class="grid grid-cols-2 gap-2"></div>
+                <button onclick="closeFlavorModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
         </div>
 
@@ -89,136 +89,114 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let items = [];
-        let tempName = "";
-        let editTargetId = null;
+        let currentPage = 'shelf';
+        let tempName = "", editTargetId = null;
 
         const categories = ["Scotch", "Japanese", "Irish", "American", "Canadian", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands", "No Region"];
+        const flavors = ["Smoky", "Peaty", "Sherry", "Honey", "Floral", "Fruity", "Spicy", "None"];
 
-        window.moveItem = async (index, direction) => {
-            const newItems = [...items];
-            const targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= newItems.length) return;
-            [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
-            const batch = writeBatch(db);
-            newItems.forEach((item, idx) => {
-                const ref = doc(db, "users", auth.currentUser.uid, "whiskies", item.id);
-                batch.update(ref, { sortOrder: idx * 10 });
-            });
-            await batch.commit();
+        window.switchPage = (page) => {
+            currentPage = page;
+            document.getElementById('tab-shelf').classList.toggle('active', page === 'shelf');
+            document.getElementById('tab-archive').classList.toggle('active', page === 'archive');
+            render();
+        };
+
+        const render = () => {
+            const list = document.getElementById('whiskyList');
+            const filtered = items.filter(w => currentPage === 'shelf' ? (w.remaining > 0) : (w.remaining <= 0));
+            
+            list.innerHTML = filtered.map((w, i) => {
+                const catDisp = w.region && w.region !== "No Region" ? `${w.category} / ${w.region}` : (w.category || 'Others');
+                const isArchive = w.remaining <= 0;
+                return `
+                <div class="whisky-card p-4 relative cat-${w.category} ${isArchive ? 'archive-card' : ''}"
+                     onmousedown="startPress('${w.id}', '${w.name}')" ontouchstart="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" ontouchend="cancelPress()">
+                    
+                    <div class="flex justify-between items-start mb-2 pr-12">
+                        <div class="flex-1">
+                            <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}')">${catDisp} ✎</span>
+                            <h3 class="font-black text-xl mt-1 tracking-tighter break-all" onclick="event.stopPropagation(); editName('${w.id}', '${w.name}')">${w.name}</h3>
+                            <div class="mt-1" onclick="event.stopPropagation(); openFlavorEdit('${w.id}')">
+                                <span class="flavor-tag text-amber-200"># ${w.flavor || 'Add flavor note'} ✎</span>
+                            </div>
+                        </div>
+                        <div class="text-white font-black text-2xl opacity-90">${w.remaining}%</div>
+                    </div>
+
+                    ${!isArchive ? `
+                    <div class="slider-container mt-4">
+                        <input type="range" min="0" max="100" step="5" value="${w.remaining}" 
+                               oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-2xl').innerText=this.value+'%'"
+                               onchange="updateStock('${w.id}', this.value)"
+                               onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                    </div>
+                    ` : '<div class="text-[10px] mt-4 opacity-50 uppercase font-bold tracking-widest text-center">Rest in Peace</div>'}
+
+                    <div class="absolute right-2 top-0 bottom-0 flex flex-col justify-center space-y-1">
+                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-10 h-10 bg-black/20 rounded-lg border border-white/10">▲</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-10 h-10 bg-black/20 rounded-lg border border-white/10">▼</button>
+                    </div>
+                </div>`;
+            }).join('');
         };
 
         window.updateStock = async (id, val) => {
             await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
         };
 
-        window.editBottleName = async (id, currentName) => {
-            const newName = prompt("Edit Bottle Name", currentName);
-            if (newName && newName !== currentName) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: newName });
-            }
+        window.editName = async (id, old) => {
+            const n = prompt("Edit Name", old);
+            if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n });
         };
 
-        window.openCategoryEdit = (id, currentName) => {
-            editTargetId = id; tempName = "";
-            showCategoryModal("Select Category", categories);
+        window.openFlavorEdit = (id) => {
+            editTargetId = id;
+            const opt = document.getElementById('flavorOptions');
+            opt.innerHTML = flavors.map(f => `<button onclick="selectFlavor('${f}')" class="category-btn bg-slate-700 text-sm">${f}</button>`).join('');
+            document.getElementById('flavorModal').classList.add('active');
         };
+
+        window.selectFlavor = async (f) => {
+            await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { flavor: f === "None" ? "" : f });
+            closeFlavorModal();
+        };
+
+        window.openCatEdit = (id) => { editTargetId = id; showModal("Category", categories); };
+        const showModal = (title, opts, isReg = false) => {
+            const m = document.getElementById('modal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="category-btn ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>`).join('');
+            m.classList.add('active');
+        };
+
+        window.selectCat = (c) => c === "Scotch" ? showModal("Region", scotchRegions, true) : finalize(c, "");
+        window.selectReg = (r) => finalize("Scotch", r);
+        const finalize = async (c, r) => {
+            if (editTargetId) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
+            else if (tempName) await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, flavor: "", sortOrder: items.length * 10 });
+            closeModal();
+        };
+
+        window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; tempName = ""; };
+        window.closeFlavorModal = () => { document.getElementById('flavorModal').classList.remove('active'); editTargetId = null; };
 
         let pressTimer;
-        window.startPress = (id, name) => {
-            pressTimer = setTimeout(async () => {
-                if (confirm(`Delete "${name}" from stock?`)) {
-                    await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id));
-                }
-            }, 800);
-        };
+        window.startPress = (id, name) => pressTimer = setTimeout(async () => { if(confirm(`Delete "${name}"?`)) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); }, 800);
         window.cancelPress = () => clearTimeout(pressTimer);
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { await signInAnonymously(auth); return; }
-            const q = query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc"));
-            onSnapshot(q, (snap) => {
+            onSnapshot(query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
                 items = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                document.getElementById('stats').innerText = "STOCK: " + items.length;
-                document.getElementById('whiskyList').innerHTML = items.map((w, i) => {
-                    const categoryDisplay = w.region && w.region !== "No Region" ? `${w.category} / ${w.region}` : (w.category || 'Others');
-                    return `
-                    <div class="whisky-card p-4 relative cat-${w.category || 'Others'}" 
-                         onmousedown="startPress('${w.id}', '${w.name}')" onmouseup="cancelPress()" 
-                         ontouchstart="startPress('${w.id}', '${w.name}')" ontouchend="cancelPress()">
-                        
-                        <div class="flex justify-between items-start mb-3 pr-12">
-                            <div class="flex-1">
-                                <span class="tag" onclick="event.stopPropagation(); openCategoryEdit('${w.id}', '${w.name}')">${categoryDisplay} ✎</span>
-                                <h3 class="font-black text-xl mt-2 tracking-tighter leading-tight break-all" onclick="event.stopPropagation(); editBottleName('${w.id}', '${w.name}')">
-                                    ${w.name} <span class="text-xs opacity-50">✎</span>
-                                </h3>
-                            </div>
-                            <div class="text-white font-black text-2xl opacity-90 ml-2">${w.remaining ?? 100}<span class="text-xs ml-1">%</span></div>
-                        </div>
-
-                        <div class="slider-container">
-                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
-                               oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-2xl').innerHTML=this.value+'<span class=\'text-xs ml-1\'>%</span>'"
-                               onchange="updateStock('${w.id}', this.value)"
-                               onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
-                        </div>
-
-                        <div class="absolute right-2 top-0 bottom-0 flex flex-col justify-center space-y-1">
-                            <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-10 h-12 bg-black/30 backdrop-blur-sm rounded-lg text-sm border border-white/20 active:bg-white/40">▲</button>
-                            <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-10 h-12 bg-black/30 backdrop-blur-sm rounded-lg text-sm border border-white/20 active:bg-white/40">▼</button>
-                        </div>
-                    </div>
-                `}).join('');
+                render();
             });
         });
 
-        const showCategoryModal = (title, options, isRegion = false) => {
-            const modal = document.getElementById('catModal');
-            const catOptions = document.getElementById('catOptions');
-            document.getElementById('modalTitle').innerText = title;
-            catOptions.innerHTML = '';
-            
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = isRegion ? 'category-btn btn-sub' : `category-btn btn-${opt}`;
-                btn.innerText = opt;
-                btn.onclick = () => isRegion ? selectRegion(opt) : selectCategory(opt);
-                catOptions.appendChild(btn);
-            });
-            modal.classList.add('active');
-        };
-
-        window.selectCategory = async (category) => {
-            if (category === "Scotch") {
-                showCategoryModal("Select Region", scotchRegions, true);
-            } else {
-                finalizeUpdate(category, "");
-            }
-        };
-
-        window.selectRegion = async (region) => {
-            finalizeUpdate("Scotch", region);
-        };
-
-        const finalizeUpdate = async (category, region) => {
-            document.getElementById('catModal').classList.remove('active');
-            if (editTargetId) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category, region });
-                editTargetId = null;
-            } else if (tempName) {
-                await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), {
-                    name: tempName, category, region, remaining: 100, createdAt: Date.now(), sortOrder: items.length * 10
-                });
-                tempName = "";
-            }
-        };
-
         document.getElementById('addBtn').onclick = () => {
-            const name = prompt("Enter Bottle Name");
-            if (name) { tempName = name; editTargetId = null;
-                showCategoryModal("Select Category", categories);
-            }
+            const n = prompt("New Bottle Name");
+            if (n) { tempName = n; editTargetId = null; showModal("Category", categories); }
         };
     </script>
 </body>
