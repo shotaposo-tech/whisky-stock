@@ -32,19 +32,19 @@
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
         .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; }
         #login-screen { background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); z-index: 200; }
+        #loading-overlay { z-index: 300; background: #0f172a; }
     </style>
 </head>
 <body>
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
+        <div class="text-amber-500 font-bold animate-pulse">Checking Access...</div>
+    </div>
+
     <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden">
         <h1 class="text-4xl italic gold-text uppercase tracking-[0.3em] mb-4">Whisky Stock</h1>
         <p class="text-slate-400 mb-12 font-bold text-sm">Cloud Sync Enabled</p>
         <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl flex items-center gap-4 shadow-xl active:scale-95 transition-all">
-            <svg width="20" height="20" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
             Googleでログイン
         </button>
     </div>
@@ -71,9 +71,7 @@
                 </div>
             </div>
         </header>
-
         <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
-
         <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
                 <span id="editCatTargetName" class="editing-name">---</span>
@@ -81,7 +79,6 @@
                 <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
         </div>
-
         <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">
             <span>＋</span>
         </button>
@@ -89,7 +86,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -111,25 +108,29 @@
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
 
-        // ログインボタンのクリック時のみリダイレクトを実行
-        document.getElementById('loginBtn').onclick = () => {
-            signInWithRedirect(auth, provider);
+        // ログインボタン: PopUp方式に変更（安定性重視）
+        document.getElementById('loginBtn').onclick = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("ログインに失敗しました。もう一度お試しください。");
+            }
         };
 
         window.logout = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
-        // ログイン状態の変化を監視
+        // ログイン監視
         onAuthStateChanged(auth, (user) => {
+            document.getElementById('loading-overlay').classList.add('hidden');
             const loginScreen = document.getElementById('login-screen');
             const appEl = document.getElementById('app');
 
             if (user) {
-                // ログイン成功時
                 loginScreen.classList.add('hidden');
                 appEl.classList.remove('hidden');
                 initApp(user.uid);
             } else {
-                // 未ログイン時
                 loginScreen.classList.remove('hidden');
                 appEl.classList.add('hidden');
             }
