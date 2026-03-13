@@ -19,7 +19,7 @@
         .btn-American, .cat-American { border-color: #f59e0b; background: linear-gradient(135deg, #d97706, #b45309); } 
         .btn-Blended, .cat-Blended { border-color: #94a3b8; background: linear-gradient(135deg, #475569, #1e293b); }
         .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .slider-container { width: calc(100% - 75px); margin-top: 14px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; }
@@ -97,11 +97,8 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            
             const abvBtn = document.getElementById('sort-abv');
             const stockBtn = document.getElementById('sort-remaining');
-
-            // WISH LISTでもソートバーは表示するが、STOCKソートボタンだけは不要なので隠す
             if (page === 'wish') {
                 abvBtn.style.display = 'inline-block';
                 stockBtn.style.display = 'none';
@@ -135,7 +132,6 @@
                 return false;
             });
 
-            // 全てのページでソートを有効化
             filtered.sort((a, b) => {
                 if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
@@ -148,22 +144,22 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
                 
-                // 度数バッジ：Archiveのソート時のみ非表示
+                // 度数チップ：Archive以外で表示
                 const showAbv = !(currentPage === 'archive');
-                const abvBadge = showAbv ? `<span class="tag bg-black/40 text-amber-400 border-none" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` : '';
+                const abvBadge = showAbv ? `<span class="tag bg-black/40 text-amber-400 border-none shrink-0" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>` : '';
 
                 if (w.isWish) {
                     return `
                     <div class="whisky-card p-6 wish-card relative" ${pressEvents}>
-                        <div class="flex justify-between items-center pr-12">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                        <div class="flex justify-between items-start pr-12">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-2 overflow-hidden">
+                                    <span class="tag truncate shrink" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                                     ${abvBadge}
                                 </div>
                                 <h3 class="font-black text-xl tracking-tighter break-all" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                             </div>
-                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-2">GET!</button>
+                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-2 mt-1">GET!</button>
                         </div>
                         <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
                             <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button>
@@ -175,14 +171,14 @@
                 return `
                 <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
                     <div class="flex justify-between items-start mb-1 pr-16">
-                        <div class="flex-1">
+                        <div class="flex-1 min-w-0 overflow-hidden">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                                <span class="tag truncate shrink" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                                 ${abvBadge}
                             </div>
                             <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                         </div>
-                        <div class="text-white font-black text-2xl opacity-90 text-right">${w.remaining}%</div>
+                        <div class="text-white font-black text-2xl opacity-90 text-right shrink-0 ml-2 min-w-[60px]">${w.remaining}%</div>
                     </div>
                     <div class="slider-container">
                         <input type="range" min="0" max="100" step="5" value="${w.remaining}" 
@@ -255,7 +251,6 @@
                     (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? (i.remaining > 0 && !i.isWish) : (i.remaining <= 0 && !i.isWish)))
                 ) === item;
             });
-
             if (targetOverallIndex === -1) return;
             const newItems = [...items];
             [newItems[overallIndex], newItems[targetOverallIndex]] = [newItems[targetOverallIndex], newItems[overallIndex]];
