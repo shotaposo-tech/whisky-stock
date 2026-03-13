@@ -10,7 +10,7 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
         .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
@@ -30,6 +30,8 @@
         .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        /* 残量表示の特別スタイル */
+        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; }
     </style>
 </head>
 <body>
@@ -150,15 +152,15 @@
                 if (w.isWish) {
                     return `
                     <div class="whisky-card p-6 wish-card relative" ${pressEvents}>
-                        <div class="flex justify-between items-start pr-12">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                                    ${abvBadge}
-                                </div>
-                                <h3 class="font-black text-xl tracking-tighter break-words" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                        <div class="flex flex-col pr-12">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                                ${abvBadge}
                             </div>
-                            <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-2 mt-1">GET!</button>
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-black text-xl tracking-tighter break-words flex-1">${w.name}</h3>
+                                <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-4">GET!</button>
+                            </div>
                         </div>
                         <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
                             <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button>
@@ -168,20 +170,18 @@
                 }
 
                 return `
-                <div class="whisky-card p-5 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
-                    <div class="flex justify-between items-start mb-1 pr-16">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex flex-wrap items-center gap-2 mb-2">
-                                <span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                                ${abvBadge}
-                            </div>
-                            <h3 class="font-black text-xl tracking-tighter break-words leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                <div class="whisky-card p-5 pt-6 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
+                    <div class="stock-display text-white font-black text-2xl opacity-90">${w.remaining}%</div>
+                    <div class="pr-16">
+                        <div class="flex flex-wrap items-center gap-2 mb-2 pr-12">
+                            <span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                            ${abvBadge}
                         </div>
-                        <div class="text-white font-black text-2xl opacity-90 text-right shrink-0 ml-4 min-w-[65px]">${w.remaining}%</div>
+                        <h3 class="font-black text-xl tracking-tighter break-words leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                     </div>
                     <div class="slider-container">
                         <input type="range" min="0" max="100" step="5" value="${w.remaining}" 
-                               oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.text-2xl').innerText=this.value+'%'"
+                               oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'"
                                onchange="updateStock('${w.id}', this.value)">
                     </div>
                     <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
