@@ -112,6 +112,7 @@
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             const appEl = document.getElementById('app');
+            // user.isAnonymous のチェックを外し、Googleログイン(user)があればアプリを表示
             if (user && !user.isAnonymous) {
                 loginScreen.classList.add('hidden');
                 appEl.classList.remove('hidden');
@@ -227,7 +228,6 @@
         let pressTimer;
         window.startPress = (id, name) => { 
             cancelPress(); 
-            // 判定時間を1.2秒に延長して、ページ切り替え操作と差別化
             pressTimer = setTimeout(async () => { 
                 if(confirm(`"${name}" を削除しますか？`)) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); 
             }, 1200); 
