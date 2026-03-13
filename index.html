@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <link rel="apple-touch-icon" href="apple-touch-icon 2.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Whisky Stock Pro</title>
@@ -13,23 +14,30 @@
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
+        
+        /* カテゴリーカラー */
         .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
         .btn-Japanese, .cat-Japanese { border-color: #064e3b; background: linear-gradient(135deg, #064e3b, #065f46); } 
         .btn-Irish, .cat-Irish { border-color: #10b981; background: linear-gradient(135deg, #10b981, #059669); } 
         .btn-American, .cat-American { border-color: #f59e0b; background: linear-gradient(135deg, #d97706, #b45309); } 
         .btn-Blended, .cat-Blended { border-color: #94a3b8; background: linear-gradient(135deg, #475569, #1e293b); }
         .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
+
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; display: inline-block; }
         .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        
         .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
         .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
+        
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        
         .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; }
         #login-screen { background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); z-index: 200; }
         #loading-overlay { z-index: 300; background: #0f172a; }
@@ -37,7 +45,7 @@
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
-        <div class="text-amber-500 font-bold animate-pulse">Checking Access...</div>
+        <div class="text-amber-500 font-bold animate-pulse text-sm tracking-widest uppercase">Initializing...</div>
     </div>
 
     <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden">
@@ -71,7 +79,9 @@
                 </div>
             </div>
         </header>
+
         <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
+
         <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
                 <span id="editCatTargetName" class="editing-name">---</span>
@@ -79,6 +89,7 @@
                 <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
         </div>
+
         <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">
             <span>＋</span>
         </button>
@@ -86,7 +97,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -102,25 +113,27 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+
+        // ログイン状態をブラウザに保存する設定
+        setPersistence(auth, browserLocalPersistence);
         
         let items = [];
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
 
-        // ログインボタン: PopUp方式に変更（安定性重視）
+        // ポップアップログイン（ループ回避の決定打）
         document.getElementById('loginBtn').onclick = async () => {
             try {
                 await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Login Error:", error);
-                alert("ログインに失敗しました。もう一度お試しください。");
+            } catch (err) {
+                console.error(err);
+                alert("ログインに失敗しました。シークレットモードを解除するか、ブラウザ設定を確認してください。");
             }
         };
 
         window.logout = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
-        // ログイン監視
         onAuthStateChanged(auth, (user) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             const loginScreen = document.getElementById('login-screen');
