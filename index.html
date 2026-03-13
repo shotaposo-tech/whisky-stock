@@ -13,6 +13,7 @@
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
+        /* 各カテゴリーのカラー */
         .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
         .btn-Japanese, .cat-Japanese { border-color: #064e3b; background: linear-gradient(135deg, #064e3b, #065f46); } 
         .btn-Irish, .cat-Irish { border-color: #10b981; background: linear-gradient(135deg, #10b981, #059669); } 
@@ -84,7 +85,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -106,18 +107,25 @@
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
 
-        document.getElementById('loginBtn').onclick = () => signInWithRedirect(auth, provider);
+        // ログインボタンの処理
+        document.getElementById('loginBtn').onclick = () => {
+            signInWithRedirect(auth, provider);
+        };
+
         window.logout = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
-        onAuthStateChanged(auth, (user) => {
+        // ログイン状態の監視（無限ループ回避の要）
+        onAuthStateChanged(auth, async (user) => {
             const loginScreen = document.getElementById('login-screen');
             const appEl = document.getElementById('app');
-            // user.isAnonymous のチェックを外し、Googleログイン(user)があればアプリを表示
-            if (user && !user.isAnonymous) {
+
+            if (user) {
+                // すでにログインしているなら、即座にメイン画面を表示
                 loginScreen.classList.add('hidden');
                 appEl.classList.remove('hidden');
                 initApp(user.uid);
             } else {
+                // ログインしていないならログイン画面を表示
                 loginScreen.classList.remove('hidden');
                 appEl.classList.add('hidden');
             }
@@ -189,11 +197,13 @@
             }).join('');
         };
 
+        // 各種データ更新関数
         window.editName = async (id, old) => { const n = prompt(`銘柄名を編集`, old); if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n }); };
         window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)を入力`, old); if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 40 }); };
         window.moveToShelf = async (id) => { if(confirm("SHELF(在庫)に移動しますか？")) { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 }); switchPage('shelf'); } };
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
         
+        // カテゴリー編集モーダル
         const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editCatTargetName').innerText = name; showModal(categories); };
@@ -211,6 +221,7 @@
         };
         window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
         
+        // 並べ替え
         window.moveItem = async (index, direction) => {
             if (currentSort !== 'sortOrder') return;
             const filtered = items.filter(w => (currentPage === 'wish' ? w.isWish : (currentPage === 'shelf' ? w.remaining > 0 && !w.isWish : w.remaining <= 0 && !w.isWish)));
@@ -225,6 +236,7 @@
             await batch.commit();
         };
 
+        // 長押し削除（誤操作対策済み）
         let pressTimer;
         window.startPress = (id, name) => { 
             cancelPress(); 
@@ -233,6 +245,8 @@
             }, 1200); 
         };
         window.cancelPress = () => { if(pressTimer) clearTimeout(pressTimer); };
+        
+        // 新規追加
         document.getElementById('addBtn').onclick = () => { const n = prompt(currentPage === 'wish' ? "WISH銘柄を入力" : "新しい銘柄名を入力"); if (n) { tempName = n; editTargetId = null; document.getElementById('editCatTargetName').innerText = n; showModal(categories); } };
     </script>
 </body>
