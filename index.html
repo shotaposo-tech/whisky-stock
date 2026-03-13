@@ -20,9 +20,9 @@
         .btn-Blended, .cat-Blended { border-color: #94a3b8; background: linear-gradient(135deg, #475569, #1e293b); }
         .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; display: inline-block; }
-        .slider-container { width: calc(100% - 75px); margin-top: 14px; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; }
+        .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         #modal { display: none; }
@@ -30,8 +30,7 @@
         .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
-        /* 残量表示の特別スタイル */
-        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; }
+        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -177,10 +176,12 @@
                             <span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                             ${abvBadge}
                         </div>
-                        <h3 class="font-black text-xl tracking-tighter break-words leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                        <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
                     </div>
                     <div class="slider-container">
                         <input type="range" min="0" max="100" step="5" value="${w.remaining}" 
+                               ontouchstart="event.stopPropagation(); cancelPress();"
+                               onmousedown="event.stopPropagation(); cancelPress();"
                                oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'"
                                onchange="updateStock('${w.id}', this.value)">
                     </div>
@@ -266,7 +267,7 @@
                 }
             }, 800);
         };
-        window.cancelPress = () => clearTimeout(pressTimer);
+        window.cancelPress = () => { if(pressTimer) clearTimeout(pressTimer); };
         onAuthStateChanged(auth, async (user) => {
             if (!user) { await signInAnonymously(auth); return; }
             onSnapshot(query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
