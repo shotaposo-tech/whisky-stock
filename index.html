@@ -15,9 +15,8 @@
         
         .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; }
         
-        /* 並べ替え中のカードの見た目 */
         .sortable-ghost { opacity: 0; } 
-        .sortable-drag { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 40px 80px rgba(0,0,0,0.9); z-index: 1000; border-color: rgba(255,255,255,0.4); background: #1e293b !important; }
+        .sortable-drag { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 40px 80px rgba(0,0,0,0.9); z-index: 1000; background: #1e293b !important; }
 
         .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.65), #020617); border-color: rgba(37, 99, 235, 0.9); }
         .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.6), #020617); border-color: rgba(16, 185, 129, 0.9); }
@@ -35,6 +34,10 @@
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
         
+        /* ソートボタンのデザイン復活 */
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; }
+        .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+
         .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
         .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); cursor: grab; z-index: 30; }
 
@@ -57,6 +60,15 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
+            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2">
+                <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
+                <div class="flex gap-1.5">
+                    <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
+                    <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
+                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
+                    <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
+                </div>
+            </div>
         </header>
 
         <main id="whiskyList" class="flex-grow px-4 mt-4 pb-40"></main>
@@ -91,6 +103,7 @@
 
         let items = [];
         let currentPage = 'shelf';
+        let currentSort = 'sortOrder';
         let lastTap = 0;
         let tapTimer = null;
 
@@ -100,7 +113,9 @@
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
             forceFallback: true,
+            onMove: () => currentSort === 'sortOrder', // CUSTOM以外の時はドラッグを制限
             onEnd: async () => {
+                if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
                 const batch = writeBatch(db);
                 listEls.forEach((el, idx) => {
@@ -124,6 +139,15 @@
             render();
         };
 
+        window.setSort = (key) => {
+            currentSort = key;
+            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
+                const el = document.getElementById('sort-' + k);
+                if(el) el.classList.toggle('active', k === key);
+            });
+            render();
+        };
+
         const render = () => {
             const list = document.getElementById('whiskyList');
             let filtered = items.filter(w => {
@@ -131,6 +155,19 @@
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
+            });
+
+            // ソート処理
+            filtered.sort((a, b) => {
+                if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
+                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                if (currentSort === 'remaining') {
+                    const stockA = a.remaining ?? a.percent ?? 100;
+                    const stockB = b.remaining ?? b.percent ?? 100;
+                    return stockA - stockB;
+                }
+                if (currentSort === 'category') return (a.category || "").localeCompare(b.category || "");
+                return 0;
             });
 
             list.innerHTML = filtered.map((w) => {
@@ -160,17 +197,16 @@
                             <input type="range" min="0" max="100" step="5" value="${stock}" onchange="updateStock('${w.id}', this.value)" oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
-                    <div class="drag-handle">
+                    <div class="drag-handle" style="opacity: ${currentSort === 'sortOrder' ? '1' : '0.2'}">
                         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
                     </div>
                 </div>`;
             }).join('');
         };
 
-        // タップ処理：シングルなら編集、ダブルなら削除
         window.handleTap = (e, id, name) => {
             const now = Date.now();
-            if (now - lastTap < 300) { // 300ms以内ならダブルタップ
+            if (now - lastTap < 300) {
                 clearTimeout(tapTimer);
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
