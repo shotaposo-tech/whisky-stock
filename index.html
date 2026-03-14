@@ -14,44 +14,33 @@
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
         .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
-        .btn-Scotch, .cat-Scotch { border-color: #2563eb; background: linear-gradient(135deg, #1d4ed8, #1e40af); }
-        .btn-Japanese, .cat-Japanese { border-color: #064e3b; background: linear-gradient(135deg, #064e3b, #065f46); } 
-        .btn-Irish, .cat-Irish { border-color: #10b981; background: linear-gradient(135deg, #10b981, #059669); } 
-        .btn-American, .cat-American { border-color: #f59e0b; background: linear-gradient(135deg, #d97706, #b45309); } 
-        .btn-Blended, .cat-Blended { border-color: #94a3b8; background: linear-gradient(135deg, #475569, #1e293b); }
-        .btn-Others, .cat-Others { border-color: #334155; background: linear-gradient(135deg, #1e293b, #0f172a); }
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; display: inline-block; }
         .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
-        .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; }
+        .sort-btn.active { background: #f59e0b; color: #000; }
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
-        .editing-name { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-bottom: 20px; border-left: 4px solid #f59e0b; padding-left: 12px; }
-        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; border-bottom: 2px solid transparent; color: #475569; letter-spacing: 0.05em; }
-        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; }
+        .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; }
-        #login-screen { background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); z-index: 200; }
-        #loading-overlay { z-index: 300; background: #0f172a; }
     </style>
 </head>
 <body>
-    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
-        <div class="text-amber-500 font-bold animate-pulse">Initializing...</div>
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
+        <div class="text-amber-500 font-bold animate-pulse">Checking Inventory...</div>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden">
-        <h1 class="text-4xl italic gold-text uppercase tracking-[0.3em] mb-4">Whisky Stock</h1>
-        <p class="text-slate-400 mb-12 font-bold text-sm">Cloud Sync Enabled</p>
-        <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl flex items-center gap-4 shadow-xl">
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
+    <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden bg-slate-900 z-40">
+        <h1 class="text-4xl italic gold-text uppercase tracking-[0.3em] mb-12">Whisky Stock</h1>
+        <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl flex items-center gap-4 shadow-xl active:scale-95 transition">
             Googleでログイン
         </button>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
-        <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/30 sticky top-0 z-50">
+        <header class="bg-black/95 border-b border-amber-900/30 sticky top-0 z-30">
             <div class="px-6 py-4 flex justify-between items-center">
                 <div class="w-8"></div>
                 <h1 class="text-xl italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
@@ -59,31 +48,22 @@
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
-                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
+                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/50 overflow-x-auto gap-2">
-                <div class="flex gap-1.5">
-                    <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
-                    <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
-                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
-                    <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
-                </div>
-            </div>
         </header>
-        <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
-        
-        <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
-            <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
-                <span id="editCatTargetName" class="editing-name">---</span>
-                <div id="modalOptions" class="grid grid-cols-1 gap-2"></div>
-                <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
-            </div>
-        </div>
 
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">
-            <span>＋</span>
-        </button>
+        <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
+
+        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">＋</button>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 border border-white/10">
+            <span id="editCatTargetName" class="text-white font-bold mb-4 block">カテゴリー選択</span>
+            <div id="modalOptions" class="grid grid-cols-1 gap-2"></div>
+            <button onclick="closeModal()" class="mt-6 w-full text-slate-400 font-bold">CANCEL</button>
+        </div>
     </div>
 
     <script type="module">
@@ -105,52 +85,36 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         setPersistence(auth, browserLocalPersistence);
-        
+
         let items = [];
         let currentPage = 'shelf';
-        let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
 
         document.getElementById('loginBtn').onclick = async () => {
-            try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
+            try { await signInWithPopup(auth, provider); } catch (e) { alert("ログインエラー: " + e.message); }
         };
 
         window.logout = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
         onAuthStateChanged(auth, (user) => {
             document.getElementById('loading-overlay').classList.add('hidden');
-            const loginScreen = document.getElementById('login-screen');
-            const appEl = document.getElementById('app');
             if (user) {
-                loginScreen.classList.add('hidden');
-                appEl.classList.remove('hidden');
-                initApp(user.uid);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                // 修正ポイント：直接 UID 直下の whiskies を見に行く（スクショの構造に合わせる）
+                onSnapshot(query(collection(db, user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
+                    items = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    render();
+                });
             } else {
-                loginScreen.classList.remove('hidden');
-                appEl.classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
             }
         });
-
-        // 修正点：白州・山崎がある「users」フォルダをしっかり参照
-        function initApp(uid) {
-            onSnapshot(query(collection(db, "users", uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
-                items = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                render();
-            });
-        }
 
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            render();
-        };
-
-        window.setSort = (key) => {
-            currentSort = key;
-            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
-                const el = document.getElementById('sort-' + k);
-                if(el) el.classList.toggle('active', k === key);
-            });
             render();
         };
 
@@ -163,88 +127,53 @@
                 return false;
             });
 
-            filtered.sort((a, b) => {
-                if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
-                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                if (currentSort === 'remaining') return a.remaining - b.remaining;
-                if (currentSort === 'category') return (a.category||"").localeCompare(b.category||"");
-                return 0;
-            });
-
-            list.innerHTML = filtered.map((w, i) => {
-                const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
-                const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()" ontouchmove="cancelPress()"`;
-                const abvBadge = `<span class="tag bg-black/40 text-amber-400 border-none shrink-0" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>`;
-
-                if (w.isWish) {
-                    return `<div class="whisky-card p-6 wish-card relative" ${pressEvents}><div class="flex flex-col pr-12"><div class="flex flex-wrap items-center gap-2 mb-2"><span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>${abvBadge}</div><div class="flex justify-between items-center"><h3 class="font-black text-xl tracking-tighter break-words flex-1 leading-tight">${w.name}</h3><button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="bg-amber-500 text-black font-black text-[10px] px-5 py-3 rounded-xl shadow-lg active:scale-90 shrink-0 ml-4 uppercase">GET</button></div></div><div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2"><button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button><button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▼</button></div></div>`;
-                }
-
-                return `
-                <div class="whisky-card p-5 pt-6 relative cat-${w.category || 'Others'} ${w.remaining <= 0 ? 'archive-card' : ''}" ${pressEvents}>
+            list.innerHTML = filtered.map((w, i) => `
+                <div class="whisky-card p-5 pt-6 bg-slate-800 relative">
                     <div class="stock-display text-white font-black text-2xl opacity-90">${w.remaining}%</div>
                     <div class="pr-16">
-                        <div class="flex flex-wrap items-center gap-2 mb-2 pr-12"><span class="tag shrink-0" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>${abvBadge}</div>
-                        <h3 class="font-black text-xl tracking-tighter break-all leading-tight" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                        <div class="flex gap-2 mb-2">
+                            <span class="tag bg-amber-900/40 text-amber-400">${w.category || 'Others'}</span>
+                            <span class="tag bg-black/40 text-slate-300">${w.abv || 40}%</span>
+                        </div>
+                        <h3 class="font-black text-xl tracking-tighter leading-tight">${w.name}</h3>
                     </div>
                     <div class="slider-container">
-                        <input type="range" min="0" max="100" step="5" value="${w.remaining}" ontouchstart="event.stopPropagation(); cancelPress();" onmousedown="event.stopPropagation(); cancelPress();" oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'" onchange="updateStock('${w.id}', this.value)">
+                        <input type="range" min="0" max="100" step="5" value="${w.remaining}" onchange="updateStock('${w.id}', this.value)">
                     </div>
-                    <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
-                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▲</button>
-                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center shadow-lg text-xs">▼</button>
-                    </div>
-                </div>`;
-            }).join('');
+                </div>
+            `).join('');
         };
 
-        // 修正点：各保存機能も「users」フォルダを使用
-        window.editName = async (id, old) => { const n = prompt(`銘柄名を編集`, old); if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n }); };
-        window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)を入力`, old); if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 40 }); };
-        window.moveToShelf = async (id) => { if(confirm("SHELF(在庫)に移動しますか？")) { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 }); switchPage('shelf'); } };
-        window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
-        
-        const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
-        const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editCatTargetName').innerText = name; showModal(categories); };
-        const showModal = (opts, isReg = false) => {
-            const m = document.getElementById('modal');
-            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-2xl font-black text-white border border-white/10 ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>`).join('');
-            m.classList.add('active');
+        window.updateStock = async (id, val) => {
+            await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
         };
-        window.selectCat = (c) => c === "Scotch" ? showModal(scotchRegions, true) : finalize(c, "");
-        window.selectReg = (r) => finalize("Scotch", r);
-        
-        const finalize = async (c, r) => {
-            if (editTargetId) { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
-            } else { await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
+
+        // 追加・削除・カテゴリ機能
+        const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
+        document.getElementById('addBtn').onclick = () => {
+            const n = prompt("銘柄名を入力してください");
+            if (n) {
+                tempName = n;
+                editTargetId = null;
+                document.getElementById('modal').classList.add('active');
+                document.getElementById('modalOptions').innerHTML = categories.map(c => `
+                    <button onclick="finalize('${c}')" class="p-4 rounded-xl bg-slate-700 text-white font-bold">${c}</button>
+                `).join('');
+            }
+        };
+
+        window.finalize = async (cat) => {
+            await addDoc(collection(db, auth.currentUser.uid, "whiskies"), {
+                name: tempName,
+                category: cat,
+                remaining: 100,
+                isWish: (currentPage === 'wish'),
+                sortOrder: Date.now()
+            });
             closeModal();
         };
-        window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
-        
-        window.moveItem = async (index, direction) => {
-            if (currentSort !== 'sortOrder') return;
-            const filtered = items.filter(w => (currentPage === 'wish' ? w.isWish : (currentPage === 'shelf' ? w.remaining > 0 && !w.isWish : w.remaining <= 0 && !w.isWish)));
-            const overallIndex = items.findIndex(item => item.id === filtered[index].id);
-            const targetOverallIndex = items.findIndex((item, idx) => {
-                if (direction < 0) return idx < overallIndex && items.slice(0, overallIndex).reverse().find(i => (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? (i.remaining > 0 && !i.isWish) : (i.remaining <= 0 && !i.isWish)))) === item;
-                return idx > overallIndex && items.slice(overallIndex + 1).find(i => (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? (i.remaining > 0 && !i.isWish) : (i.remaining <= 0 && !i.isWish)))) === item;
-            });
-            if (targetOverallIndex === -1) return;
-            const newItems = [...items]; [newItems[overallIndex], newItems[targetOverallIndex]] = [newItems[targetOverallIndex], newItems[overallIndex]];
-            const batch = writeBatch(db); newItems.forEach((item, idx) => batch.update(doc(db, "users", auth.currentUser.uid, "whiskies", item.id), { sortOrder: idx * 10 }));
-            await batch.commit();
-        };
 
-        let pressTimer;
-        window.startPress = (id, name) => { 
-            cancelPress(); 
-            pressTimer = setTimeout(async () => { 
-                if(confirm(`"${name}" を削除しますか？`)) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); 
-            }, 1200); 
-        };
-        window.cancelPress = () => { if(pressTimer) clearTimeout(pressTimer); };
-        document.getElementById('addBtn').onclick = () => { const n = prompt(currentPage === 'wish' ? "WISH銘柄を入力" : "新しい銘柄名を入力"); if (n) { tempName = n; editTargetId = null; document.getElementById('editCatTargetName').innerText = n; showModal(categories); } };
+        window.closeModal = () => document.getElementById('modal').classList.remove('active');
     </script>
 </body>
 </html>
