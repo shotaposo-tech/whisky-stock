@@ -26,7 +26,10 @@
         .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
-        .flv-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f59e0b; color: #000; font-weight: 900; margin-left: 8px; vertical-align: middle; }
+        
+        /* フレイバーバッジ：未設定時もタップしやすいよう padding を確保 */
+        .flv-tag { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-left: 8px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; }
+        .flv-empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; }
 
         .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
@@ -183,8 +186,11 @@
                             <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
                                 style="display:inline-block; position:relative; z-index:40; padding-right:10px;"
                                 onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                                ${w.name}${w.flavor ? `<span class="flv-tag">${w.flavor}</span>` : ''}
+                                ${w.name}
                             </h3>
+                            <span class="flv-tag ${!w.flavor ? 'flv-empty' : ''}" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                                ${w.flavor || 'Flavor ✎'}
+                            </span>
                         </div>
                     </div>
                     ${w.isWish ? `
@@ -229,13 +235,14 @@
         };
 
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
+        window.openFlvEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(flavors, 'flv-only'); };
         
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="handleModalSelect('${o}', '${mode}')" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800 shadow-lg">${o}</button>`).join('');
         };
 
-        window.handleModalSelect = (val, mode) => {
+        window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
                 tempCat = val;
                 if (val === "Scotch") openModal(scotchRegions, 'reg');
@@ -245,6 +252,9 @@
                 openModal(flavors, 'flv');
             } else if (mode === 'flv') {
                 finalize(tempCat, tempReg, val === "None" ? "" : val);
+            } else if (mode === 'flv-only') {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { flavor: val === "None" ? "" : val });
+                closeModal();
             }
         };
 
