@@ -13,14 +13,12 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* リスト最上部へのドラッグをしやすくするための余白 */
         #whiskyList { padding-top: 20px; min-height: 100vh; }
 
         .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
         
-        /* ドラッグ挙動のクリーンアップ */
-        .sortable-ghost { opacity: 0 !important; } /* 元の場所を完全に消す */
-        .sortable-drag { opacity: 0.9; transform: scale(1.05); z-index: 1000; } /* 掴んでいるカードを少し大きく */
+        .sortable-ghost { opacity: 0 !important; } 
+        .sortable-drag { opacity: 0.9; transform: scale(1.05); z-index: 1000; }
 
         .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
@@ -119,7 +117,6 @@
         let lastTap = 0;
         let tapTimer = null;
 
-        // シンプルで最高だった頃のドラッグ設定
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
             animation: 150,
@@ -164,10 +161,23 @@
                 return w.isWish === true;
             });
 
+            // ソートロジック
             if (currentSort !== 'sortOrder') {
                 filtered.sort((a, b) => {
                     if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                    if (currentSort === 'remaining') return (b.remaining || 0) - (a.remaining || 0);
+                    
+                    // 残量ソート：少ない順 (0 -> 100)
+                    if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
+                    
+                    // カテゴリーソート：指定順
+                    if (currentSort === 'category') {
+                        const order = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
+                        const orderA = order[a.category] || 99;
+                        const orderB = order[b.category] || 99;
+                        if (orderA !== orderB) return orderA - orderB;
+                        return a.name.localeCompare(b.name, 'ja');
+                    }
+
                     const valA = a[currentSort] || "";
                     const valB = b[currentSort] || "";
                     return valA.localeCompare(valB, 'ja');
@@ -175,7 +185,8 @@
             }
 
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`sort-${currentSort}`).classList.add('active');
+            const currentSortBtn = document.getElementById(`sort-${currentSort}`);
+            if (currentSortBtn) currentSortBtn.classList.add('active');
 
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
@@ -225,7 +236,7 @@
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
         };
         
-        const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
+        const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
         
