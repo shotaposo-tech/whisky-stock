@@ -26,7 +26,8 @@
         .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
-        
+        .flv-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f59e0b; color: #000; font-weight: 900; margin-left: 8px; vertical-align: middle; }
+
         .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); margin-top: -1px; }
@@ -34,8 +35,7 @@
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
         
-        /* ソートボタンのデザイン復活 */
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
@@ -60,11 +60,12 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2">
+            <div id="sort-bar" class="flex items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2 no-scrollbar">
                 <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
-                <div class="flex gap-1.5">
+                <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
                     <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                     <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
+                    <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
                     <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
                     <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
                 </div>
@@ -76,7 +77,7 @@
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3 leading-tight">---</span>
-                <div id="modalOptions" class="grid grid-cols-2 gap-3"></div>
+                <div id="modalOptions" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-2"></div>
                 <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
         </div>
@@ -113,7 +114,7 @@
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
             forceFallback: true,
-            onMove: () => currentSort === 'sortOrder', // CUSTOM以外の時はドラッグを制限
+            onMove: () => currentSort === 'sortOrder',
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
@@ -141,7 +142,7 @@
 
         window.setSort = (key) => {
             currentSort = key;
-            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
+            ['sortOrder', 'category', 'flavor', 'abv', 'remaining'].forEach(k => {
                 const el = document.getElementById('sort-' + k);
                 if(el) el.classList.toggle('active', k === key);
             });
@@ -157,16 +158,12 @@
                 return w.isWish === true;
             });
 
-            // ソート処理
             filtered.sort((a, b) => {
                 if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                if (currentSort === 'remaining') {
-                    const stockA = a.remaining ?? a.percent ?? 100;
-                    const stockB = b.remaining ?? b.percent ?? 100;
-                    return stockA - stockB;
-                }
+                if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
                 if (currentSort === 'category') return (a.category || "").localeCompare(b.category || "");
+                if (currentSort === 'flavor') return (a.flavor || "ZZZ").localeCompare(b.flavor || "ZZZ");
                 return 0;
             });
 
@@ -186,7 +183,7 @@
                             <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
                                 style="display:inline-block; position:relative; z-index:40; padding-right:10px;"
                                 onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                                ${w.name}
+                                ${w.name}${w.flavor ? `<span class="flv-tag">${w.flavor}</span>` : ''}
                             </h3>
                         </div>
                     </div>
@@ -208,13 +205,9 @@
             const now = Date.now();
             if (now - lastTap < 300) {
                 clearTimeout(tapTimer);
-                if(confirm(`「${name}」を削除しますか？`)) {
-                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-                }
+                if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
             } else {
-                tapTimer = setTimeout(() => {
-                    editName(id, name);
-                }, 300);
+                tapTimer = setTimeout(() => editName(id, name), 300);
             }
             lastTap = now;
         };
@@ -226,23 +219,41 @@
 
         const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        let tempName = "", editTargetId = null;
+        const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
+
+        let tempName = "", tempCat = "", tempReg = "", editTargetId = null;
 
         document.getElementById('addBtn').onclick = () => {
             const n = prompt(currentPage === 'wish' ? "WISH銘柄を入力" : "新しい銘柄名を入力");
-            if (n) { tempName = n; editTargetId = null; document.getElementById('editTargetName').innerText = n; openModal(categories); }
+            if (n) { tempName = n; editTargetId = null; document.getElementById('editTargetName').innerText = n; openModal(categories, 'cat'); }
         };
 
-        window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories); };
-        const openModal = (opts, isReg = false) => {
+        window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
+        
+        const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
-            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800 shadow-lg">${o}</button>`).join('');
+            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="handleModalSelect('${o}', '${mode}')" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800 shadow-lg">${o}</button>`).join('');
         };
-        window.selectCat = (c) => c === "Scotch" ? openModal(scotchRegions, true) : finalize(c, "");
-        window.selectReg = (r) => finalize("Scotch", r);
-        const finalize = async (c, r) => {
-            if (editTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { category: c, region: r });
-            } else { await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
+
+        window.handleModalSelect = (val, mode) => {
+            if (mode === 'cat') {
+                tempCat = val;
+                if (val === "Scotch") openModal(scotchRegions, 'reg');
+                else { tempReg = ""; openModal(flavors, 'flv'); }
+            } else if (mode === 'reg') {
+                tempReg = val;
+                openModal(flavors, 'flv');
+            } else if (mode === 'flv') {
+                finalize(tempCat, tempReg, val === "None" ? "" : val);
+            }
+        };
+
+        const finalize = async (c, r, f) => {
+            if (editTargetId) { 
+                await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { category: c, region: r, flavor: f });
+            } else { 
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, flavor: f, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); 
+            }
             closeModal();
         };
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
