@@ -9,46 +9,47 @@
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* カード全体のスタイル：色をより強調 */
-        .whisky-card { border-radius: 24px; border: 3px solid rgba(255,255,255,0.1); transition: all 0.2s ease; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; background: #1e293b; }
+        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); transition: all 0.2s ease; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; }
         
-        /* カテゴリ別の淡くも鮮やかな背景色とクッキリした枠線 */
-        .cat-Scotch { background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), #111827); border-color: rgba(37, 99, 235, 0.6); }
-        .cat-Japanese { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), #111827); border-color: rgba(16, 185, 129, 0.6); }
-        .cat-Irish { background: linear-gradient(135deg, rgba(5, 150, 105, 0.25), #111827); border-color: rgba(5, 150, 105, 0.6); }
-        .cat-American { background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), #111827); border-color: rgba(245, 158, 11, 0.6); }
-        .cat-Blended { background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), #111827); border-color: rgba(148, 163, 184, 0.5); }
-        .cat-Others { background: linear-gradient(135deg, rgba(51, 65, 85, 0.3), #111827); border-color: rgba(71, 85, 105, 0.6); }
+        /* カードの色をより濃く、鮮やかに設定 */
+        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.55), #020617); border-color: rgba(37, 99, 235, 0.9); }
+        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.5), #020617); border-color: rgba(16, 185, 129, 0.9); }
+        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.55), #020617); border-color: rgba(5, 150, 105, 0.9); }
+        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.55), #020617); border-color: rgba(245, 158, 11, 0.9); }
+        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.45), #020617); border-color: rgba(148, 163, 184, 0.8); }
+        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.55), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
-        .archive-card { filter: grayscale(0.7) opacity(0.6); border-style: dashed; }
+        .archive-card { filter: grayscale(0.8) contrast(1.2) opacity(0.5); border-style: dotted; }
         
-        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; color: #fbbf24; }
+        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; }
         .slider-container { width: calc(100% - 95px); margin-top: 14px; position: relative; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 30px; width: 30px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.25); height: 14px; border-radius: 7px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.6); }
         
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        
+        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
+        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
+        
+        .stock-display { position: absolute; top: 22px; right: 90px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 2rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
+        
+        .whisky-name-text { display: inline-block; cursor: pointer; position: relative; z-index: 20; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
-        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: 0.3s; }
-        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-        
-        /* 残量表示：左に寄せて視認性アップ */
-        .stock-display { position: absolute; top: 20px; right: 90px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
-    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
         <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Master Collection</div>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
-        <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/30 sticky top-0 z-50">
+        <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/40 sticky top-0 z-50">
             <div class="px-6 py-4 flex justify-center items-center">
                 <h1 class="text-xl italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
             </div>
@@ -57,9 +58,9 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/50 overflow-x-auto gap-2">
+            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2">
                 <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
-                <div class="flex gap-1.5" id="sort-buttons-container">
+                <div class="flex gap-1.5">
                     <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                     <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
                     <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
@@ -70,15 +71,15 @@
 
         <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
 
-        <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
-            <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 border border-white/10 shadow-2xl">
+        <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
+            <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3 leading-tight">---</span>
                 <div id="modalOptions" class="grid grid-cols-2 gap-3"></div>
                 <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
         </div>
 
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">＋</button>
+        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
     </div>
 
     <script type="module">
@@ -102,7 +103,7 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
-        let lastTap = 0; // ダブルタップ用
+        let lastTap = 0, tapTimer = null; 
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -119,12 +120,8 @@
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
             const stockBtn = document.getElementById('sort-remaining');
-            if (page === 'archive') {
-                stockBtn.style.display = 'none';
-                if (currentSort === 'remaining') setSort('sortOrder');
-            } else {
-                stockBtn.style.display = 'inline-block';
-            }
+            if (page === 'archive') { stockBtn.style.display = 'none'; if (currentSort === 'remaining') setSort('sortOrder');
+            } else { stockBtn.style.display = 'inline-block'; }
             render();
         };
 
@@ -155,51 +152,43 @@
 
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
-                const abvBadge = `<span class="tag" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>`;
-
                 return `
                 <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}">
                     <div class="stock-display">${w.displayStock}%</div>
-                    <div class="pr-16">
+                    <div class="pr-16 relative">
                         <div class="flex flex-wrap items-center gap-2 mb-2 pr-12">
                             <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                            ${abvBadge}
+                            <span class="tag" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
                         </div>
-                        <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
-                            onclick="handleDoubleTap('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                            ${w.name}
-                        </h3>
+                        <div>
+                            <h3 class="whisky-name-text font-black text-xl tracking-tighter leading-tight break-all" 
+                                onclick="event.stopPropagation(); handleDoubleTap('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                                ${w.name}
+                            </h3>
+                        </div>
                     </div>
                     ${w.isWish ? `
                         <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-all">GET & ADD TO SHELF</button>
                     ` : `
-                        <div class="slider-container">
+                        <div class="slider-container" onclick="event.stopPropagation()">
                             <input type="range" min="0" max="100" step="5" value="${w.displayStock}" onchange="updateStock('${w.id}', this.value)" oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
                     <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
-                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs active:bg-white/20">▲</button>
-                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs active:bg-white/20">▼</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/50 rounded-xl border border-white/20 flex items-center justify-center text-xs active:bg-white/40">▲</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/50 rounded-xl border border-white/20 flex items-center justify-center text-xs active:bg-white/40">▼</button>
                     </div>
                 </div>`;
             }).join('');
         };
 
-        // 削除ミス防止：ダブルタップで削除
         window.handleDoubleTap = (id, name) => {
             const now = Date.now();
-            const TIMESPAN = 300; // 0.3秒以内の2回タップを検知
-            if (now - lastTap < TIMESPAN) {
-                if(confirm(`「${name}」を削除しますか？`)) {
-                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-                }
+            if (now - lastTap < 300) {
+                clearTimeout(tapTimer);
+                if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
             } else {
-                // シングルタップ時は名前編集（または何もしない設定も可）
-                setTimeout(() => {
-                    if (Date.now() - lastTap >= TIMESPAN) {
-                        editName(id, name);
-                    }
-                }, TIMESPAN);
+                tapTimer = setTimeout(() => editName(id, name), 300);
             }
             lastTap = now;
         };
@@ -236,7 +225,7 @@
         const openModal = (opts, isReg = false) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => `
-                <button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/10 ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>
+                <button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/20 shadow-xl ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>
             `).join('');
         };
 
