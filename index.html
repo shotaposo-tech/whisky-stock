@@ -13,34 +13,45 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { height: 160px; border-radius: 20px; border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.6); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        /* ラフ図に基づいたカードレイアウト */
+        .whisky-card { height: 180px; border-radius: 24px; border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; }
         
-        .cat-Scotch { background: linear-gradient(180deg, rgba(37, 99, 235, 0.3), #020617); border-color: rgba(37, 99, 235, 0.5); }
-        .cat-Japanese { background: linear-gradient(180deg, rgba(16, 185, 129, 0.3), #020617); border-color: rgba(16, 185, 129, 0.5); }
-        .cat-Irish { background: linear-gradient(180deg, rgba(5, 150, 105, 0.3), #020617); border-color: rgba(5, 150, 105, 0.5); }
-        .cat-American { background: linear-gradient(180deg, rgba(245, 158, 11, 0.3), #020617); border-color: rgba(245, 158, 11, 0.5); }
-        .cat-Blended { background: linear-gradient(180deg, rgba(148, 163, 184, 0.2), #020617); border-color: rgba(148, 163, 184, 0.4); }
-        .cat-Others { background: linear-gradient(180deg, rgba(51, 65, 85, 0.3), #020617); border-color: rgba(71, 85, 105, 0.5); }
+        /* カテゴリ別グラデーション（背景） */
+        .cat-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.25), #020617); border-color: rgba(37, 99, 235, 0.5); }
+        .cat-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25), #020617); border-color: rgba(16, 185, 129, 0.5); }
+        .cat-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.25), #020617); border-color: rgba(5, 150, 105, 0.5); }
+        .cat-American { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.25), #020617); border-color: rgba(245, 158, 11, 0.5); }
+        .cat-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.15), #020617); border-color: rgba(148, 163, 184, 0.4); }
+        .cat-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.25), #020617); border-color: rgba(71, 85, 105, 0.5); }
 
-        .tag { font-size: 8px; padding: 1px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
-        .flv-tag { font-size: 9px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-top: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.1); }
+        /* 要素の絶対配置（ラフ図通り） */
+        .pos-cat { position: absolute; top: 16px; left: 16px; }
+        .pos-abv { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
+        .pos-flv { position: absolute; top: 16px; right: 16px; }
+        .pos-name { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-60%); text-align: center; padding: 0 20px; }
+        .pos-stock { position: absolute; bottom: 42px; right: 20px; text-align: right; }
+        .pos-drag { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); opacity: 0.2; }
 
-        .stock-display { font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.2rem; color: #fff; margin-top: 4px; letter-spacing: 0.05em; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        /* デザインパーツ */
+        .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); color: #fbbf24; }
+        .flv-badge { font-size: 10px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.2); border: 1px dashed rgba(255,255,255,0.1); box-shadow: none; }
+        
+        .main-name { font-size: 1.4rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .stock-num { font-family: ui-monospace, monospace; font-size: 1.5rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-        .slider-container { width: 100%; padding: 0 44px; margin-top: 12px; pointer-events: none; }
+        /* スライダー（◯以外無効） */
+        .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 100%; padding: 0 20px; pointer-events: none; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; pointer-events: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        
-        .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.1); cursor: grab; z-index: 10; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
-
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
-        #modal { display: none; }
-        #modal.active { display: flex; z-index: 100; }
+        #modal { display: none; z-index: 100; }
+        #modal.active { display: flex; }
     </style>
 </head>
 <body>
@@ -130,7 +141,7 @@
         window.setSort = (k) => { currentSort = k; render(); };
         window.switchPage = (p) => { 
             currentPage = p; 
-            ['shelf', 'wish', 'archive'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === p));
+            ['shelf', 'wish', 'archive'].forEach(t => { if(document.getElementById(`tab-${t}`)) document.getElementById(`tab-${t}`).classList.toggle('active', t === p); });
             render(); 
         };
 
@@ -145,39 +156,38 @@
 
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
-                const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
+                const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Category');
                 
                 return `
-                <div class="whisky-card p-4 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
-                    <div class="flex flex-wrap justify-center gap-1.5 mb-1.5">
-                        <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</span>
-                        <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>
-                    </div>
-                    
-                    <h3 class="font-black text-xl tracking-tight leading-tight px-4 mb-1" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                        ${w.name}
-                    </h3>
-
-                    <div class="stock-display">${stock}%</div>
-                    
-                    <div onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                        <span class="flv-tag ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
+                <div class="whisky-card cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
+                    <div class="pos-cat tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
+                    <div class="pos-abv tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
+                    <div class="pos-flv" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                        <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
 
-                    <div class="slider-container">
+                    <div class="pos-name">
+                        <h3 class="main-name" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                    </div>
+
+                    <div class="pos-stock">
+                        <div class="stock-num">${stock}%</div>
+                    </div>
+
+                    <div class="slider-wrap">
                         <input type="range" min="0" max="100" step="5" value="${stock}" 
                             onchange="updateStock('${w.id}', this.value)" 
-                            oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
+                            oninput="this.closest('.whisky-card').querySelector('.stock-num').innerText=this.value+'%'">
                     </div>
 
-                    <div class="drag-handle" style="opacity: ${currentSort === 'sortOrder' ? '1' : '0'}">
+                    <div class="drag-handle pos-drag" style="display: ${currentSort === 'sortOrder' ? 'flex' : 'none'}">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
                     </div>
                 </div>`;
             }).join('');
         };
 
-        // --- JavaScript Logic (復旧) ---
+        // UI Interactions
         window.handleTap = (e, id, name) => {
             const now = Date.now();
             if (now - lastTap < 300) {
