@@ -12,32 +12,26 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; margin-bottom: 16px; }
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; white-space: nowrap; display: inline-block; color: #fbbf24; }
-        .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; }
-        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.5rem; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fbbf24; }
+        .stock-display { position: absolute; top: 16px; right: 20px; font-weight: 900; font-size: 1.5rem; color: white; pointer-events: none; }
     </style>
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
-        <div class="text-amber-500 font-bold animate-pulse">Connecting to Main Shelf...</div>
+        <div class="text-amber-500 font-bold animate-pulse">Restoring Collection...</div>
     </div>
 
-    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative p-4">
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col p-4">
         <header class="text-center py-8">
             <h1 class="text-2xl italic gold-text uppercase tracking-widest">Whisky Stock</h1>
-            <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Authorized Access Only</p>
+            <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-tighter">Connected to: yE6g...TTJ2</p>
         </header>
-
-        <main id="whiskyList" class="flex-grow pb-40"></main>
-
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30">＋</button>
+        <main id="whiskyList" class="pb-40"></main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
@@ -51,35 +45,39 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 【YE6... フォルダを完全固定】
-        // 白州・山崎・スペシャルリザーブが眠っている聖域のパスです
-        const targetUID = "YE6F6eFvW0Yf21iXqXGf7O8H0XN2"; 
+        // 教えていただいた正しいID！
+        const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         const initApp = () => {
-            document.getElementById('loading-overlay').classList.add('hidden');
             const q = query(collection(db, "users", targetUID, "whiskies"));
             
             onSnapshot(q, (snap) => {
+                document.getElementById('loading-overlay').classList.add('hidden');
                 const items = snap.docs.map(d => {
                     const data = d.data();
-                    // percentでもremainingでもどっちでも読み込めるように
+                    // 昔のpercentと今のremaining、両方に対応
                     const stock = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
                     return { id: d.id, ...data, displayStock: stock };
                 });
 
-                // 名前順にソート
+                // 名前順に並べる
                 items.sort((a, b) => a.name.localeCompare(b.name));
                 
                 const list = document.getElementById('whiskyList');
+                if (items.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 mt-10">指定のID内にボトルが見つかりません。<br>Firebaseの階層を再確認してください。</p>';
+                    return;
+                }
+
                 list.innerHTML = items.map(w => `
                     <div class="whisky-card p-5">
                         <div class="stock-display">${w.displayStock}%</div>
                         <div class="pr-16">
                             <div class="flex gap-2 mb-2"><span class="tag">${w.category || 'Whisky'}</span></div>
-                            <h3 class="font-black text-xl tracking-tighter">${w.name}</h3>
+                            <h3 class="font-black text-xl">${w.name}</h3>
                         </div>
-                        <div class="slider-container">
-                            <input type="range" min="0" max="100" step="5" value="${w.displayStock}" onchange="updateStock('${w.id}', this.value)">
+                        <div class="mt-4">
+                            <input type="range" min="0" max="100" step="5" value="${w.displayStock}" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" onchange="updateStock('${w.id}', this.value)">
                         </div>
                     </div>
                 `).join('');
@@ -92,19 +90,6 @@
                 remaining: parseInt(val),
                 percent: parseInt(val) 
             });
-        };
-
-        document.getElementById('addBtn').onclick = async () => {
-            const n = prompt("新しい銘柄名を入力してください");
-            if (n) {
-                await addDoc(collection(db, "users", targetUID, "whiskies"), {
-                    name: n,
-                    category: "Japanese",
-                    remaining: 100,
-                    percent: 100,
-                    sortOrder: Date.now()
-                });
-            }
         };
 
         initApp();
