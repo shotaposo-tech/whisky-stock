@@ -11,104 +11,98 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        
-        /* カードの基本デザイン */
-        .whisky-card { border-radius: 24px; border: 2px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; background: #1e293b; }
-        
-        /* カテゴリー別の色付け（枠線と背景に薄く色をのせる） */
-        .cat-Scotch { border-color: #2563eb; background: linear-gradient(145deg, #1e293b 70%, rgba(37, 99, 235, 0.2)); }
-        .cat-Japanese { border-color: #059669; background: linear-gradient(145deg, #1e293b 70%, rgba(5, 150, 105, 0.2)); } 
-        .cat-Irish { border-color: #10b981; background: linear-gradient(145deg, #1e293b 70%, rgba(16, 185, 129, 0.2)); } 
-        .cat-American { border-color: #f59e0b; background: linear-gradient(145deg, #1e293b 70%, rgba(245, 158, 11, 0.2)); } 
-        .cat-Blended { border-color: #94a3b8; background: linear-gradient(145deg, #1e293b 70%, rgba(148, 163, 184, 0.2)); }
-        .cat-Others { border-color: #6366f1; background: linear-gradient(145deg, #1e293b 70%, rgba(99, 102, 241, 0.2)); }
-
-        .archive-card { filter: grayscale(1) opacity(0.4) !important; border-style: dashed !important; }
-
-        /* モーダル内のボタン色 */
-        .btn-Scotch { background: #2563eb; } .btn-Japanese { background: #059669; }
-        .btn-Irish { background: #10b981; } .btn-American { background: #d97706; }
-        .btn-Blended { background: #475569; } .btn-Others { background: #6366f1; }
-
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: #fbbf24; }
-        
-        .slider-container { width: calc(100% - 85px); margin-top: 14px; position: relative; z-index: 10; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 10px; border-radius: 6px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%; border: 2px solid white; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-
+        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; margin-bottom: 16px; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fbbf24; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
-        
-        #modal { display: none; }
-        #modal.active { display: flex; z-index: 100; }
-        
-        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; letter-spacing: 0.1em; }
-        .nav-tab.active { color: #f59e0b; border-bottom: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.05); }
-        
-        /* 残量表示の位置（少し左へ調整） */
-        .stock-display { position: absolute; top: 16px; right: 75px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; }
+        .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
+        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.5rem; color: white; }
     </style>
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
-        <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Master Collection</div>
+        <div class="text-amber-500 font-bold animate-pulse">CONNECTING...</div>
     </div>
 
-    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
-        <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/30 sticky top-0 z-50">
-            <div class="px-6 py-4 flex justify-center items-center">
-                <h1 class="text-xl italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
+        <header class="bg-black/95 border-b border-amber-900/30 sticky top-0 z-50">
+            <div class="px-6 py-4 text-center">
+                <h1 class="text-xl italic gold-text uppercase tracking-widest">Whisky Stock</h1>
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/50 overflow-x-auto gap-2">
-                <span class="text-[9px] font-black text-slate-500 uppercase shrink-0">Sort:</span>
-                <div class="flex gap-1.5">
-                    <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
-                    <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
-                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
-                    <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
-                </div>
-            </div>
         </header>
-
-        <main id="whiskyList" class="flex-grow px-4 mt-6 space-y-4 pb-40"></main>
-
-        <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
-            <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 border border-white/10 shadow-2xl">
-                <span id="editCatTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3 leading-tight">CATEGORY</span>
-                <div id="modalOptions" class="grid grid-cols-2 gap-3"></div>
-                <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2">CANCEL</button>
-            </div>
-        </div>
-
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">＋</button>
+        <main id="whiskyList" class="p-4 space-y-4 pb-40"></main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+        // 設定値をクリーンアップして適用
         const firebaseConfig = {
-            apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
-            authDomain: "my-whisky-app.firebaseapp.com",
-            projectId: "my-whisky-app",
-            storageBucket: "my-whisky-app.firebasestorage.app",
-            messagingSenderId: "577760896040",
-            appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d"
+            apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ".trim(),
+            authDomain: "my-whisky-app.firebaseapp.com".trim(),
+            projectId: "my-whisky-app".trim(),
+            storageBucket: "my-whisky-app.firebasestorage.app".trim(),
+            messagingSenderId: "577760896040".trim(),
+            appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d".trim()
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
-        
+
         let items = [];
         let currentPage = 'shelf';
-        let currentSort = 'sortOrder';
-        let tempName = "", editTargetId = null;
 
-        onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
-            document.getElementById('loading-overlay').classList.add('
+        const q = query(collection(db, "users", targetUID, "whiskies"));
+        
+        onSnapshot(q, (snap) => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            items = snap.docs.map(d => {
+                const data = d.data();
+                const stock = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
+                return { id: d.id, ...data, displayStock: stock };
+            });
+            render();
+        }, (err) => {
+            alert("Firebase接続エラー: " + err.message);
+        });
+
+        window.switchPage = (page) => {
+            currentPage = page;
+            ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
+            render();
+        };
+
+        const render = () => {
+            const list = document.getElementById('whiskyList');
+            let filtered = items.filter(w => {
+                if (currentPage === 'shelf') return w.displayStock > 0 && !w.isWish;
+                if (currentPage === 'wish') return w.isWish === true;
+                if (currentPage === 'archive') return w.displayStock <= 0 && !w.isWish;
+                return false;
+            });
+
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+            list.innerHTML = filtered.map(w => `
+                <div class="whisky-card p-5">
+                    <div class="stock-display">${w.displayStock}%</div>
+                    <h3 class="font-black text-xl mb-4">${w.name}</h3>
+                    <input type="range" min="0" max="100" step="5" value="${w.displayStock}" class="w-full" onchange="updateStock('${w.id}', this.value)">
+                </div>
+            `).join('');
+        };
+
+        window.updateStock = async (id, val) => {
+            await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val), percent: parseInt(val) });
+        };
+    </script>
+</body>
+</html>
