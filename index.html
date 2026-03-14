@@ -15,7 +15,7 @@
         
         .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; }
         
-        /* ドラッグ中の設定：さらに見やすく */
+        /* 並べ替え中のカードの見た目 */
         .sortable-ghost { opacity: 0; } 
         .sortable-drag { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 40px 80px rgba(0,0,0,0.9); z-index: 1000; border-color: rgba(255,255,255,0.4); background: #1e293b !important; }
 
@@ -28,7 +28,6 @@
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
         
-        /* スライダーをより細く、丸を小さく */
         .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); margin-top: -1px; }
@@ -92,8 +91,8 @@
 
         let items = [];
         let currentPage = 'shelf';
-        let longPressTimer;
-        let startX, startY;
+        let lastTap = 0;
+        let tapTimer = null;
 
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
@@ -101,7 +100,6 @@
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
             forceFallback: true,
-            fallbackOnBody: true,
             onEnd: async () => {
                 const listEls = document.querySelectorAll('.whisky-card');
                 const batch = writeBatch(db);
@@ -149,10 +147,8 @@
                         </div>
                         <div>
                             <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
-                                style="display:inline-block; position:relative; z-index:40; padding-right:20px;"
-                                ontouchstart="startPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                                ontouchend="endPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')"
-                                ontouchmove="checkMove(event)">
+                                style="display:inline-block; position:relative; z-index:40; padding-right:10px;"
+                                onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                                 ${w.name}
                             </h3>
                         </div>
@@ -160,7 +156,7 @@
                     ${w.isWish ? `
                         <button onclick="moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs">GET & ADD TO SHELF</button>
                     ` : `
-                        <div class="slider-container" onclick="event.stopPropagation()">
+                        <div class="slider-container">
                             <input type="range" min="0" max="100" step="5" value="${stock}" onchange="updateStock('${w.id}', this.value)" oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
@@ -171,30 +167,20 @@
             }).join('');
         };
 
-        window.startPress = (e, id, name) => {
-            startX = e.touches[0].pageX;
-            startY = e.touches[0].pageY;
-            longPressTimer = setTimeout(() => {
-                if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-                longPressTimer = null;
-            }, 600); // 削除時間を少し短縮して反応良く
-        };
-
-        window.checkMove = (e) => {
-            if (!longPressTimer) return;
-            const moveX = Math.abs(e.touches[0].pageX - startX);
-            const moveY = Math.abs(e.touches[0].pageY - startY);
-            if (moveX > 15 || moveY > 15) { // 許容範囲を15pxに拡大
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
+        // タップ処理：シングルなら編集、ダブルなら削除
+        window.handleTap = (e, id, name) => {
+            const now = Date.now();
+            if (now - lastTap < 300) { // 300ms以内ならダブルタップ
+                clearTimeout(tapTimer);
+                if(confirm(`「${name}」を削除しますか？`)) {
+                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
+                }
+            } else {
+                tapTimer = setTimeout(() => {
+                    editName(id, name);
+                }, 300);
             }
-        };
-
-        window.endPress = (id, name) => {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                editName(id, name);
-            }
+            lastTap = now;
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val), percent: parseInt(val) }); };
