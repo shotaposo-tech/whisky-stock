@@ -11,28 +11,41 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; }
-        .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
+        
+        /* カード全体のスタイル：透過背景を基本に */
+        .whisky-card { border-radius: 24px; border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; }
+        
+        /* カテゴリ別の淡い背景色 */
+        .cat-Scotch { background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), #1e293b); border-color: rgba(37, 99, 235, 0.4); }
+        .cat-Japanese { background: linear-gradient(135deg, rgba(6, 78, 59, 0.25), #1e293b); border-color: rgba(6, 78, 59, 0.5); }
+        .cat-Irish { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), #1e293b); border-color: rgba(16, 185, 129, 0.4); }
+        .cat-American { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), #1e293b); border-color: rgba(245, 158, 11, 0.4); }
+        .cat-Blended { background: linear-gradient(135deg, rgba(148, 163, 184, 0.1), #1e293b); border-color: rgba(148, 163, 184, 0.3); }
+        .cat-Others { background: linear-gradient(135deg, rgba(51, 65, 85, 0.2), #1e293b); border-color: rgba(51, 65, 85, 0.4); }
+
+        .archive-card { filter: grayscale(0.8) opacity(0.6); border-style: dashed; }
         .wish-card { border: 2px solid #334155; background: #1e293b; }
-        /* カテゴリ別カラー */
-        .cat-Scotch { border-color: #2563eb; } .cat-Japanese { border-color: #064e3b; } 
-        .cat-Irish { border-color: #10b981; } .cat-American { border-color: #f59e0b; } 
-        .cat-Blended { border-color: #94a3b8; } .cat-Others { border-color: #334155; }
+        
+        /* カテゴリボタン（追加・編集用） */
         .btn-Scotch { background: #1d4ed8; } .btn-Japanese { background: #064e3b; }
         .btn-Irish { background: #059669; } .btn-American { background: #b45309; }
         .btn-Blended { background: #475569; } .btn-Others { background: #1e293b; }
         
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; display: inline-block; color: #fbbf24; }
-        .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; white-space: nowrap; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; }
+        .slider-container { width: calc(100% - 85px); margin-top: 14px; position: relative; z-index: 10; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%; border: 2px solid white; background: white; }
+        
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; letter-spacing: 0.05em; border-bottom: 2px solid transparent; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
-        .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.5rem; }
+        
+        /* 残量表示：少し左に寄せる（right: 60px -> 80px） */
+        .stock-display { position: absolute; top: 18px; right: 80px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.6rem; opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -52,7 +65,7 @@
             </nav>
             <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/50 overflow-x-auto gap-2">
                 <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
-                <div class="flex gap-1.5">
+                <div class="flex gap-1.5" id="sort-buttons-container">
                     <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                     <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
                     <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
@@ -89,14 +102,13 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; // 正解のID
+        const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [];
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
 
-        // データ購読
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
@@ -111,12 +123,25 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
+            
+            // Archiveの時はSTOCKソートボタンを隠す
+            const stockBtn = document.getElementById('sort-remaining');
+            if (page === 'archive') {
+                stockBtn.style.display = 'none';
+                if (currentSort === 'remaining') setSort('sortOrder');
+            } else {
+                stockBtn.style.display = 'inline-block';
+            }
+            
             render();
         };
 
         window.setSort = (key) => {
             currentSort = key;
-            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => document.getElementById('sort-' + k).classList.toggle('active', k === key));
+            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
+                const el = document.getElementById('sort-' + k);
+                if(el) el.classList.toggle('active', k === key);
+            });
             render();
         };
 
@@ -142,7 +167,7 @@
                 const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
 
                 return `
-                <div class="whisky-card p-5 pt-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}" ${pressEvents}>
+                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}" ${pressEvents}>
                     <div class="stock-display">${w.displayStock}%</div>
                     <div class="pr-16">
                         <div class="flex flex-wrap items-center gap-2 mb-2 pr-12">
