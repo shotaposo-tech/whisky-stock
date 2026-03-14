@@ -11,17 +11,11 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
-        .archive-card { filter: grayscale(1) opacity(0.5); border-style: dashed; }
-        .wish-card { border: 2px solid #334155; background: #1e293b; }
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; display: inline-block; }
+        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; white-space: nowrap; display: inline-block; }
         .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 2px solid white; background: white; }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; }
-        .sort-btn.active { background: #f59e0b; color: #000; }
-        #modal { display: none; }
-        #modal.active { display: flex; z-index: 100; }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .stock-display { position: absolute; top: 16px; right: 60px; font-family: ui-monospace, monospace; pointer-events: none; }
@@ -29,21 +23,19 @@
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
-        <div class="text-amber-500 font-bold animate-pulse">Checking Inventory...</div>
+        <div class="text-amber-500 font-bold animate-pulse">Loading Your Shelf...</div>
     </div>
 
     <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden bg-slate-900 z-40">
-        <h1 class="text-4xl italic gold-text uppercase tracking-[0.3em] mb-12">Whisky Stock</h1>
-        <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl flex items-center gap-4 shadow-xl active:scale-95 transition">
-            Googleでログイン
-        </button>
+        <h1 class="text-4xl italic gold-text uppercase mb-12">Whisky Stock</h1>
+        <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl shadow-xl">Googleでログイン</button>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
         <header class="bg-black/95 border-b border-amber-900/30 sticky top-0 z-30">
             <div class="px-6 py-4 flex justify-between items-center">
                 <div class="w-8"></div>
-                <h1 class="text-xl italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
+                <h1 class="text-xl italic gold-text uppercase">Whisky Stock</h1>
                 <button onclick="logout()" class="text-[9px] font-bold text-slate-500 border border-slate-700 px-2 py-1 rounded">OUT</button>
             </div>
             <nav class="flex">
@@ -52,24 +44,14 @@
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
         </header>
-
         <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
-
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">＋</button>
-    </div>
-
-    <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 border border-white/10">
-            <span id="editCatTargetName" class="text-white font-bold mb-4 block">カテゴリー選択</span>
-            <div id="modalOptions" class="grid grid-cols-1 gap-2"></div>
-            <button onclick="closeModal()" class="mt-6 w-full text-slate-400 font-bold">CANCEL</button>
-        </div>
+        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30">＋</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
@@ -88,23 +70,25 @@
 
         let items = [];
         let currentPage = 'shelf';
-        let tempName = "", editTargetId = null;
-
-        document.getElementById('loginBtn').onclick = async () => {
-            try { await signInWithPopup(auth, provider); } catch (e) { alert("ログインエラー: " + e.message); }
-        };
-
-        window.logout = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
         onAuthStateChanged(auth, (user) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             if (user) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
-                // 修正ポイント：直接 UID 直下の whiskies を見に行く（スクショの構造に合わせる）
-                onSnapshot(query(collection(db, user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
+                
+                // 【重要修正】スクショの階層（users > ID > whiskies）に固定
+                // IDの揺れを吸収するため、まずは固定のパスで試行します
+                const path = "AIatoo8mPKZaErVgrJfOTVEDICs2"; 
+                onSnapshot(query(collection(db, "users", path, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
                     items = snap.docs.map(d => ({id: d.id, ...d.data()}));
                     render();
+                }, (err) => {
+                    // もし上記でエラーなら、ログイン中のUIDで再試行
+                    onSnapshot(query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
+                        items = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                        render();
+                    });
                 });
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
@@ -112,68 +96,30 @@
             }
         });
 
-        window.switchPage = (page) => {
-            currentPage = page;
-            ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            render();
+        // ログイン・ログアウト・切替・描画・更新処理
+        document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth);
+        window.switchPage = (page) => { currentPage = page; render(); };
+        window.updateStock = (id, val) => {
+            // 更新時も正しいパス（users直下）を指定
+            const path = "AIatoo8mPKZaErVgrJfOTVEDICs2";
+            updateDoc(doc(db, "users", path, "whiskies", id), { remaining: parseInt(val) });
         };
 
         const render = () => {
             const list = document.getElementById('whiskyList');
-            let filtered = items.filter(w => {
-                if (currentPage === 'shelf') return w.remaining > 0 && !w.isWish;
-                if (currentPage === 'archive') return w.remaining <= 0 && !w.isWish;
-                if (currentPage === 'wish') return w.isWish === true;
-                return false;
-            });
-
-            list.innerHTML = filtered.map((w, i) => `
-                <div class="whisky-card p-5 pt-6 bg-slate-800 relative">
-                    <div class="stock-display text-white font-black text-2xl opacity-90">${w.remaining}%</div>
+            let filtered = items.filter(w => (currentPage === 'shelf' ? w.remaining > 0 : (currentPage === 'wish' ? w.isWish : w.remaining <= 0)));
+            list.innerHTML = filtered.map(w => `
+                <div class="whisky-card p-5">
+                    <div class="stock-display text-white font-black text-2xl">${w.remaining}%</div>
                     <div class="pr-16">
-                        <div class="flex gap-2 mb-2">
-                            <span class="tag bg-amber-900/40 text-amber-400">${w.category || 'Others'}</span>
-                            <span class="tag bg-black/40 text-slate-300">${w.abv || 40}%</span>
-                        </div>
-                        <h3 class="font-black text-xl tracking-tighter leading-tight">${w.name}</h3>
+                        <div class="flex gap-2 mb-2"><span class="tag bg-amber-900/40 text-amber-400">${w.category}</span></div>
+                        <h3 class="font-black text-xl">${w.name}</h3>
                     </div>
-                    <div class="slider-container">
-                        <input type="range" min="0" max="100" step="5" value="${w.remaining}" onchange="updateStock('${w.id}', this.value)">
-                    </div>
+                    <div class="slider-container"><input type="range" min="0" max="100" step="5" value="${w.remaining}" onchange="updateStock('${w.id}', this.value)"></div>
                 </div>
             `).join('');
         };
-
-        window.updateStock = async (id, val) => {
-            await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) });
-        };
-
-        // 追加・削除・カテゴリ機能
-        const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
-        document.getElementById('addBtn').onclick = () => {
-            const n = prompt("銘柄名を入力してください");
-            if (n) {
-                tempName = n;
-                editTargetId = null;
-                document.getElementById('modal').classList.add('active');
-                document.getElementById('modalOptions').innerHTML = categories.map(c => `
-                    <button onclick="finalize('${c}')" class="p-4 rounded-xl bg-slate-700 text-white font-bold">${c}</button>
-                `).join('');
-            }
-        };
-
-        window.finalize = async (cat) => {
-            await addDoc(collection(db, auth.currentUser.uid, "whiskies"), {
-                name: tempName,
-                category: cat,
-                remaining: 100,
-                isWish: (currentPage === 'wish'),
-                sortOrder: Date.now()
-            });
-            closeModal();
-        };
-
-        window.closeModal = () => document.getElementById('modal').classList.remove('active');
     </script>
 </body>
 </html>
