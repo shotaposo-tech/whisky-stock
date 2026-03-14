@@ -115,7 +115,7 @@
         let items = [];
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
-        let lastTap = 0;
+        let tapCount = 0;
         let tapTimer = null;
 
         const sortable = new Sortable(document.getElementById('whiskyList'), {
@@ -185,7 +185,8 @@
 
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
-                const catDisp = (w.category === 'Scotch' && w.region) ? `${w.region}` : (w.category || 'Category');
+                // カテゴリー表示の修正：Scotch/Region 形式にする
+                const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
                 
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
@@ -196,7 +197,7 @@
                     <div class="pos-flv" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
-                    <div class="pos-name" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
+                    <div class="pos-name" onclick="handleWhiskyTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
@@ -215,30 +216,28 @@
             }).join('');
         };
 
-        window.handleTap = (e, id, name, currentMemo) => {
-            const now = Date.now();
-            if (now - lastTap < 300) {
-                clearTimeout(tapTimer);
-                // ダブルタップでメモ入力
-                const m = prompt(`「${name}」のメモを入力`, currentMemo);
-                if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
-            } else {
-                tapTimer = setTimeout(() => {
-                    // シングルタップで銘柄名編集または削除
-                    const n = prompt("銘柄名を変更（空欄で削除）", name);
+        window.handleWhiskyTap = (e, id, name, currentMemo) => {
+            tapCount++;
+            clearTimeout(tapTimer);
+            tapTimer = setTimeout(() => {
+                if (tapCount === 2) {
+                    const n = prompt("銘柄名を変更（空欄にすると削除）", name);
                     if (n === "") {
-                         if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
+                        if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                     } else if (n && n !== name) {
-                         updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                        updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
                     }
-                }, 300);
-            }
-            lastTap = now;
+                } else if (tapCount >= 3) {
+                    const m = prompt(`「${name}」のメモを入力`, currentMemo);
+                    if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
+                }
+                tapCount = 0;
+            }, 350);
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
         window.editAbv = async (id, name, old) => { 
-            const n = prompt(`"${name}" の度数(%)`, ""); 
+            const n = prompt(`"${name}" の度数(%)`, old); 
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
         };
         
@@ -251,7 +250,7 @@
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("銘柄名を入力");
             if (!n) return;
-            tName = n; eTargetId = null;
+            tName = n; eTargetId = null; 
             document.getElementById('editTargetName').innerText = n;
             openModal(categories, 'cat');
         };
@@ -270,15 +269,29 @@
         window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
                 tCat = val;
-                if (val === "Scotch") openModal(scotchRegions, 'reg');
-                else { tReg = ""; openModal(flavors, 'flv'); }
+                if (val === "Scotch") {
+                    openModal(scotchRegions, 'reg');
+                } else {
+                    tReg = "";
+                    if (eTargetId) {
+                        await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: "" });
+                        closeModal();
+                    } else {
+                        openModal(flavors, 'flv');
+                    }
+                }
             } else if (mode === 'reg') {
                 tReg = val;
-                openModal(flavors, 'flv');
+                if (eTargetId) {
+                    await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg });
+                    closeModal();
+                } else {
+                    openModal(flavors, 'flv');
+                }
             } else if (mode === 'flv') {
                 tFlv = val === "None" ? "" : val;
                 closeModal();
-                const a = prompt(`"${tName}" の度数(%)を入力`, "");
+                const a = prompt(`"${tName}" の度数(%)を入力`, "40");
                 tAbv = (a === null || a === "") ? 40 : parseFloat(a);
                 finalize();
             } else if (mode === 'flv-only') {
@@ -288,9 +301,7 @@
         };
 
         const finalize = async () => {
-            if (eTargetId) {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg, flavor: tFlv });
-            } else {
+            if (!eTargetId) {
                 const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
                 await addDoc(collection(db, "users", targetUID, "whiskies"), { 
                     name: tName, category: tCat, region: tReg, flavor: tFlv, abv: tAbv, remaining: 100, 
