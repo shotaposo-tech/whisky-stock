@@ -26,7 +26,8 @@
         .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
-        .flv-tag { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-left: 8px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; }
+        
+        .flv-tag { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-left: 0px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; margin-top: 6px; }
         .flv-empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; }
 
         .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
@@ -39,7 +40,7 @@
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
-        .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
+        .stock-display { position: absolute; top: 18px; right: 54px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; z-index: 10; }
         .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); cursor: grab; z-index: 30; }
 
         #modal { display: none; }
@@ -139,14 +140,9 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            
-            // ARCHIVEの時は残量ソートボタンを消す
             const stockBtn = document.getElementById('sort-remaining');
             if(stockBtn) stockBtn.style.display = (page === 'archive') ? 'none' : 'block';
-            
-            // ARCHIVE移動時にSTOCKソート中だったらCUSTOMに戻す
             if(page === 'archive' && currentSort === 'remaining') setSort('sortOrder');
-            
             render();
         };
 
@@ -184,14 +180,13 @@
                 return `
                 <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
                     <div class="stock-display">${stock}%</div>
-                    <div class="pr-12">
-                        <div class="flex flex-nowrap items-center gap-1.5 mb-2 overflow-x-hidden">
+                    <div class="pr-20"> <div class="flex flex-nowrap items-center gap-1.5 mb-2 overflow-x-hidden">
                             <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                             <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
                         </div>
-                        <div>
-                            <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
-                                style="display:inline-block; position:relative; z-index:40; padding-right:10px;"
+                        <div class="flex flex-col items-start">
+                            <h3 class="font-black text-xl tracking-tight leading-tight" 
+                                style="word-break: keep-all; overflow-wrap: break-word;"
                                 onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                                 ${w.name}
                             </h3>
