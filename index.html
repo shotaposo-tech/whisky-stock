@@ -13,14 +13,15 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* カード基本スタイル */
-        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; transition: transform 0.1s; }
-        
-        /* ドラッグ中の見た目 */
-        .sortable-ghost { opacity: 0 !important; } 
-        .sortable-drag { opacity: 0.95; transform: scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.8); z-index: 1000; }
+        /* リスト最上部へのドラッグをしやすくするための余白 */
+        #whiskyList { padding-top: 20px; min-height: 100vh; }
 
-        /* カテゴリーカラー（カード & ボタン共通） */
+        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
+        
+        /* ドラッグ挙動のクリーンアップ */
+        .sortable-ghost { opacity: 0 !important; } /* 元の場所を完全に消す */
+        .sortable-drag { opacity: 0.9; transform: scale(1.05); z-index: 1000; } /* 掴んでいるカードを少し大きく */
+
         .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
         .color-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.3), #020617) !important; border-color: rgba(5, 150, 105, 0.8) !important; }
@@ -55,10 +56,7 @@
 
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
-
-        /* モーダル内ボタン */
         .modal-btn { padding: 1rem; border-radius: 1rem; font-weight: 800; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
-        .modal-btn:active { transform: scale(0.95); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -85,7 +83,7 @@
             </div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 pt-4 pb-40"></main>
+        <main id="whiskyList" class="flex-grow px-4 pb-40"></main>
 
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
@@ -111,8 +109,8 @@
             appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d"
         };
 
-        const firebase_app = initializeApp(firebaseConfig);
-        const db = getFirestore(firebase_app);
+        const f_app = initializeApp(firebaseConfig);
+        const db = getFirestore(f_app);
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [];
@@ -121,13 +119,11 @@
         let lastTap = 0;
         let tapTimer = null;
 
-        // ドラッグ設定
+        // シンプルで最高だった頃のドラッグ設定
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
-            animation: 200,
-            ghostClass: 'sortable-ghost', 
-            dragClass: 'sortable-drag',
-            forceFallback: true, // モバイルでの可動域を安定させる
+            animation: 150,
+            ghostClass: 'sortable-ghost',
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
@@ -212,7 +208,6 @@
             }).join('');
         };
 
-        // UI 処理
         window.handleTap = (e, id, name) => {
             const now = Date.now();
             if (now - lastTap < 300) {
@@ -234,33 +229,25 @@
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
         
-        let tempName = "", tempCat = "", tempReg = "", tempAbv = 40, tempFlv = "", editTargetId = null;
+        let tName = "", tCat = "", tReg = "", tAbv = 40, tFlv = "", eTargetId = null;
         
-        // 追加ボタン
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("銘柄名を入力");
             if (!n) return;
-
-            const isDup = items.some(item => item.name.toLowerCase() === n.toLowerCase());
-            if (isDup) {
-                if (!confirm(`「${n}」は既に登録されています。追加を続けますか？`)) return;
+            if (items.some(i => i.name.toLowerCase() === n.toLowerCase())) {
+                if (!confirm(`「${n}」は既に登録されています。追加しますか？`)) return;
             }
-
-            tempName = n;
-            editTargetId = null;
-
-            // フロー：銘柄名 → カテゴリー（ここからモーダル開始）
+            tName = n; eTargetId = null;
             document.getElementById('editTargetName').innerText = n;
             openModal(categories, 'cat');
         };
 
-        window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
-        window.openFlvEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(flavors, 'flv-only'); };
+        window.openCatEdit = (id, name) => { eTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
+        window.openFlvEdit = (id, name) => { eTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(flavors, 'flv-only'); };
         
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
-                // カテゴリー選択時のみ、色分けクラスを適用
                 const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
                 return `<button onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
             }).join('');
@@ -268,43 +255,32 @@
 
         window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
-                tempCat = val;
+                tCat = val;
                 if (val === "Scotch") openModal(scotchRegions, 'reg');
-                else { tempReg = ""; openModal(flavors, 'flv'); }
+                else { tReg = ""; openModal(flavors, 'flv'); }
             } else if (mode === 'reg') {
-                tempReg = val;
+                tReg = val;
                 openModal(flavors, 'flv');
             } else if (mode === 'flv') {
-                tempFlv = val === "None" ? "" : val;
-                askAbvFinal(); // 最後に度数を聞く
+                tFlv = val === "None" ? "" : val;
+                closeModal();
+                const a = prompt(`"${tName}" の度数(%)を入力`, "");
+                tAbv = (a === null || a === "") ? 40 : parseFloat(a);
+                finalize();
             } else if (mode === 'flv-only') {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { flavor: val === "None" ? "" : val });
+                await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { flavor: val === "None" ? "" : val });
                 closeModal();
             }
         };
 
-        // 最後に入力ダイアログで度数を確認して完了
-        const askAbvFinal = async () => {
-            closeModal();
-            const a = prompt(`"${tempName}" の度数(%)を入力`, "");
-            tempAbv = (a === null || a === "") ? 40 : parseFloat(a);
-            finalize(tempCat, tempReg, tempFlv);
-        };
-
-        const finalize = async (c, r, f) => {
-            if (editTargetId) {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { category: c, region: r, flavor: f });
+        const finalize = async () => {
+            if (eTargetId) {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg, flavor: tFlv });
             } else {
                 const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
                 await addDoc(collection(db, "users", targetUID, "whiskies"), { 
-                    name: tempName, 
-                    category: c, 
-                    region: r, 
-                    flavor: f, 
-                    abv: tempAbv, 
-                    remaining: 100, 
-                    isWish: (currentPage === 'wish'), 
-                    sortOrder: minOrder - 10 
+                    name: tName, category: tCat, region: tReg, flavor: tFlv, abv: tAbv, remaining: 100, 
+                    isWish: (currentPage === 'wish'), sortOrder: minOrder - 10 
                 }); 
             }
         };
