@@ -13,9 +13,8 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; /* 右側に広いハンドル用スペースを確保 */ }
+        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
         
-        /* カテゴリ別グラデーション（背景） */
         .cat-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.25), #020617); border-color: rgba(37, 99, 235, 0.6); }
         .cat-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25), #020617); border-color: rgba(16, 185, 129, 0.6); }
         .cat-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.25), #020617); border-color: rgba(5, 150, 105, 0.6); }
@@ -23,35 +22,34 @@
         .cat-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.15), #020617); border-color: rgba(148, 163, 184, 0.5); }
         .cat-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.25), #020617); border-color: rgba(71, 85, 105, 0.6); }
 
-        /* 左上にスペック情報を縦に並べる（ABVを移動） */
-        .pos-left-specs { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+        /* 左上の情報配置 */
+        .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
         
-        .pos-flv { position: absolute; top: 20px; right: 74px; /* ハンドルスペース（54px）＋余白（20px） */ }
-        .pos-name { position: absolute; top: 50%; left: 0; right: 54px; /* ハンドルスペース分 */ transform: translateY(-55%); text-align: center; padding: 0 20px; }
-        
-        /* 残量表示を小さくしてスライダーの右へ */
-        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; /* ハンドルスペース（54px）＋余白 */ text-align: right; pointer-events: none; z-index: 10; }
+        /* 銘柄名の配置：スペックと被らないように調整 */
+        .pos-name { position: absolute; top: 55%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; }
+        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); margin-top: 10px; }
 
-        /* デザインパーツ */
-        .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.5); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
+        .pos-flv { position: absolute; top: 18px; right: 74px; }
+        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; pointer-events: none; z-index: 10; }
+
+        .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
         
-        .main-name { font-size: 1.4rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
         .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-        /* スライダー（短く左下に配置、◯以外無効） */
-        .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 62%; /* 幅を大幅に短縮 */ padding: 0 0 0 20px; pointer-events: none; }
+        .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 62%; padding: 0 0 0 20px; pointer-events: none; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; pointer-events: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-        /* ドラッグハンドル：右端に広いスペースを確保し、縦線を削除 */
-        .drag-handle { width: 54px; /* スペースをさらに広く */ height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.15); cursor: grab; z-index: 30; /* 背景とボーダー（縦線）を削除 */ }
+        .drag-handle { width: 54px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.15); cursor: grab; z-index: 30; }
         .whisky-card:active .drag-handle { color: #f59e0b; }
 
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; }
+        
+        /* ソートボタン：中央寄せ */
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         #modal { display: none; z-index: 100; }
@@ -73,14 +71,12 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2 no-scrollbar">
-                <div class="flex gap-1.5">
-                    <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
-                    <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
-                    <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
-                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
-                    <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
-                </div>
+            <div id="sort-bar" class="flex items-center justify-center px-4 py-2 bg-slate-900/80 gap-2">
+                <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
+                <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
+                <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
+                <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
+                <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
             </div>
         </header>
 
@@ -123,8 +119,6 @@
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
             animation: 250,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
@@ -147,7 +141,14 @@
         window.setSort = (k) => { currentSort = k; render(); };
         window.switchPage = (p) => { 
             currentPage = p; 
-            ['shelf', 'wish', 'archive'].forEach(t => { if(document.getElementById(`tab-${t}`)) document.getElementById(`tab-${t}`).classList.toggle('active', t === p); });
+            // ソートボタンの表示切り替え（ArchiveならSTOCKを消す）
+            const stockBtn = document.getElementById('sort-remaining');
+            if (stockBtn) stockBtn.style.display = (p === 'archive') ? 'none' : 'block';
+            
+            ['shelf', 'wish', 'archive'].forEach(t => { 
+                const el = document.getElementById(`tab-${t}`);
+                if(el) el.classList.toggle('active', t === p); 
+            });
             render(); 
         };
 
@@ -159,6 +160,21 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             });
+
+            // ソート処理
+            if (currentSort !== 'sortOrder') {
+                filtered.sort((a, b) => {
+                    if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                    if (currentSort === 'remaining') return (b.remaining || 0) - (a.remaining || 0);
+                    const valA = a[currentSort] || "";
+                    const valB = b[currentSort] || "";
+                    return valA.localeCompare(valB, 'ja');
+                });
+            }
+
+            // UI更新
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`sort-${currentSort}`).classList.add('active');
 
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
@@ -196,7 +212,7 @@
             }).join('');
         };
 
-        // UI Interactions
+        // Logic (Interactions)
         window.handleTap = (e, id, name) => {
             const now = Date.now();
             if (now - lastTap < 300) {
@@ -207,30 +223,23 @@
             }
             lastTap = now;
         };
-
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
         window.editName = async (id, old) => { const n = prompt("銘柄名を変更", old); if (n && n !== old) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n }); };
         window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)`, old); if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || 40 }); };
-
         const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
-
         let tempName = "", tempCat = "", tempReg = "", editTargetId = null;
-
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("銘柄名を入力");
             if (n) { tempName = n; editTargetId = null; document.getElementById('editTargetName').innerText = n; openModal(categories, 'cat'); }
         };
-
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
         window.openFlvEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(flavors, 'flv-only'); };
-        
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="handleModalSelect('${o}', '${mode}')" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800">${o}</button>`).join('');
         };
-
         window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
                 tempCat = val;
@@ -246,7 +255,6 @@
                 closeModal();
             }
         };
-
         const finalize = async (c, r, f) => {
             if (editTargetId) await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { category: c, region: r, flavor: f });
             else await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, flavor: f, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); 
