@@ -13,35 +13,33 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; }
+        /* カードの高さを固定し、高さを抑える */
+        .whisky-card { height: 160px; border-radius: 20px; border: 3px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; overflow: hidden; margin-bottom: 0.75rem; background: #020617; display: flex; flex-direction: column; justify-content: space-between; }
         
-        .sortable-ghost { opacity: 0; } 
-        .sortable-drag { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 40px 80px rgba(0,0,0,0.9); z-index: 1000; background: #1e293b !important; }
+        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.5), #020617); border-color: rgba(37, 99, 235, 0.7); }
+        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.5), #020617); border-color: rgba(16, 185, 129, 0.7); }
+        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.5), #020617); border-color: rgba(5, 150, 105, 0.7); }
+        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.5), #020617); border-color: rgba(245, 158, 11, 0.7); }
+        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.4), #020617); border-color: rgba(148, 163, 184, 0.6); }
+        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.5), #020617); border-color: rgba(71, 85, 105, 0.7); }
 
-        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.65), #020617); border-color: rgba(37, 99, 235, 0.9); }
-        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.6), #020617); border-color: rgba(16, 185, 129, 0.9); }
-        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.65), #020617); border-color: rgba(5, 150, 105, 0.9); }
-        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.65), #020617); border-color: rgba(245, 158, 11, 0.9); }
-        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.55), #020617); border-color: rgba(148, 163, 184, 0.8); }
-        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
-
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
+        .tag { font-size: 8px; padding: 1px 6px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.3); color: #fbbf24; white-space: nowrap; }
         
-        .flv-tag { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-left: 0px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; margin-top: 6px; }
-        .flv-empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; }
+        .flv-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; }
+        .flv-empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); border: 1px dashed rgba(255,255,255,0.2); box-shadow: none; }
 
-        .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); margin-top: -1px; }
+        .slider-container { width: calc(100% - 40px); margin-bottom: 4px; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
-        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
-        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
+        .nav-tab { flex: 1; padding: 12px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; }
+        .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.15); border-bottom: 3px solid #f59e0b; }
         
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
-        .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        .stock-display { position: absolute; top: 12px; right: 50px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.6rem; text-shadow: 0 2px 8px rgba(0,0,0,1); pointer-events: none; z-index: 10; color: #fff; }
+        .drag-handle { width: 40px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); cursor: grab; z-index: 30; }
 
-        .stock-display { position: absolute; top: 18px; right: 54px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; z-index: 10; }
-        .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); cursor: grab; z-index: 30; }
+        /* 銘柄名を2行に制限 */
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
@@ -55,16 +53,15 @@
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
         <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/40 sticky top-0 z-50">
-            <div class="px-6 py-4 flex justify-center items-center">
-                <h1 class="text-xl italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
+            <div class="px-6 py-3 flex justify-center items-center">
+                <h1 class="text-lg italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
-                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
+                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
             <div id="sort-bar" class="flex items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2 no-scrollbar">
-                <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
                 <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
                     <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                     <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
@@ -75,7 +72,7 @@
             </div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 mt-4 pb-40"></main>
+        <main id="whiskyList" class="flex-grow px-3 mt-3 pb-40"></main>
 
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
@@ -85,7 +82,7 @@
             </div>
         </div>
 
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
+        <button id="addBtn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
     </div>
 
     <script type="module">
@@ -178,32 +175,32 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 
                 return `
-                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
+                <div class="whisky-card p-4 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
                     <div class="stock-display">${stock}%</div>
-                    <div class="pr-20"> <div class="flex flex-nowrap items-center gap-1.5 mb-2 overflow-x-hidden">
-                            <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                            <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
+                    <div class="pr-[80px]">
+                        <div class="flex flex-nowrap items-center gap-1.5 mb-1.5 overflow-x-hidden">
+                            <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</span>
+                            <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</span>
                         </div>
-                        <div class="flex flex-col items-start">
-                            <h3 class="font-black text-xl tracking-tight leading-tight" 
-                                style="word-break: keep-all; overflow-wrap: break-word;"
+                        <div class="flex flex-col items-start h-[65px] justify-start overflow-hidden">
+                            <h3 class="font-black text-lg tracking-tight leading-[1.1] mb-1 line-clamp-2" 
                                 onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                                 ${w.name}
                             </h3>
                             <span class="flv-tag ${!w.flavor ? 'flv-empty' : ''}" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                                ${w.flavor || 'Flavor ✎'}
+                                ${w.flavor || 'Flavor'}
                             </span>
                         </div>
                     </div>
                     ${w.isWish ? `
-                        <button onclick="moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs">GET & ADD TO SHELF</button>
+                        <button onclick="moveToShelf('${w.id}')" class="mt-2 w-full bg-amber-500 text-black font-black py-2 rounded-lg text-[10px]">ADD TO SHELF</button>
                     ` : `
                         <div class="slider-container">
                             <input type="range" min="0" max="100" step="5" value="${stock}" onchange="updateStock('${w.id}', this.value)" oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
-                    <div class="drag-handle" style="opacity: ${currentSort === 'sortOrder' ? '1' : '0.2'}">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                    <div class="drag-handle" style="opacity: ${currentSort === 'sortOrder' ? '1' : '0.1'}">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
                     </div>
                 </div>`;
             }).join('');
