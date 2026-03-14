@@ -13,18 +13,18 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; margin-bottom: 16px; }
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fbbf24; }
-        .stock-display { position: absolute; top: 16px; right: 20px; font-weight: 900; font-size: 1.5rem; color: white; pointer-events: none; }
+        .stock-display { position: absolute; top: 16px; right: 20px; font-weight: 900; font-size: 1.5rem; color: white; }
     </style>
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
-        <div class="text-amber-500 font-bold animate-pulse">Restoring Collection...</div>
+        <div class="text-amber-500 font-bold animate-pulse">WELCOME BACK!</div>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col p-4">
         <header class="text-center py-8">
             <h1 class="text-2xl italic gold-text uppercase tracking-widest">Whisky Stock</h1>
-            <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-tighter">Connected to: yE6g...TTJ2</p>
+            <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-tighter">Main Collection: yE6g...TTJ2</p>
         </header>
         <main id="whiskyList" class="pb-40"></main>
     </div>
@@ -45,44 +45,44 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 教えていただいた正しいID！
+        // 教えていただいた絶対的に正しいID
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
-        const initApp = () => {
-            const q = query(collection(db, "users", targetUID, "whiskies"));
-            
-            onSnapshot(q, (snap) => {
-                document.getElementById('loading-overlay').classList.add('hidden');
-                const items = snap.docs.map(d => {
-                    const data = d.data();
-                    // 昔のpercentと今のremaining、両方に対応
-                    const stock = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
-                    return { id: d.id, ...data, displayStock: stock };
-                });
-
-                // 名前順に並べる
-                items.sort((a, b) => a.name.localeCompare(b.name));
-                
-                const list = document.getElementById('whiskyList');
-                if (items.length === 0) {
-                    list.innerHTML = '<p class="text-center text-slate-500 mt-10">指定のID内にボトルが見つかりません。<br>Firebaseの階層を再確認してください。</p>';
-                    return;
-                }
-
-                list.innerHTML = items.map(w => `
-                    <div class="whisky-card p-5">
-                        <div class="stock-display">${w.displayStock}%</div>
-                        <div class="pr-16">
-                            <div class="flex gap-2 mb-2"><span class="tag">${w.category || 'Whisky'}</span></div>
-                            <h3 class="font-black text-xl">${w.name}</h3>
-                        </div>
-                        <div class="mt-4">
-                            <input type="range" min="0" max="100" step="5" value="${w.displayStock}" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" onchange="updateStock('${w.id}', this.value)">
-                        </div>
-                    </div>
-                `).join('');
+        const q = query(collection(db, "users", targetUID, "whiskies"));
+        
+        onSnapshot(q, (snap) => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            const items = snap.docs.map(d => {
+                const data = d.data();
+                // percent(旧) と remaining(新) の両方に対応
+                const stock = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
+                return { id: d.id, ...data, displayStock: stock };
             });
-        };
+
+            items.sort((a, b) => a.name.localeCompare(b.name));
+            
+            const list = document.getElementById('whiskyList');
+            if (items.length === 0) {
+                list.innerHTML = '<p class="text-center text-slate-500 mt-10">指定されたIDの中にデータが見つかりません。Firebase ConsoleでこのIDの中にwhiskiesコレクションがあるか確認してください。</p>';
+                return;
+            }
+
+            list.innerHTML = items.map(w => `
+                <div class="whisky-card p-5">
+                    <div class="stock-display">${w.displayStock}%</div>
+                    <div class="pr-16">
+                        <div class="flex gap-2 mb-2"><span class="tag">${w.category || 'Whisky'}</span></div>
+                        <h3 class="font-black text-xl">${w.name}</h3>
+                    </div>
+                    <div class="mt-4">
+                        <input type="range" min="0" max="100" step="5" value="${w.displayStock}" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" onchange="updateStock('${w.id}', this.value)">
+                    </div>
+                </div>
+            `).join('');
+        }, (error) => {
+            console.error("Error fetching data: ", error);
+            document.getElementById('whiskyList').innerHTML = `<p class="text-red-500">エラーが発生しました: ${error.message}<br>Firebaseの「ルール」を確認してください。</p>`;
+        });
 
         window.updateStock = async (id, val) => {
             const ref = doc(db, "users", targetUID, "whiskies", id);
@@ -91,8 +91,6 @@
                 percent: parseInt(val) 
             });
         };
-
-        initApp();
     </script>
 </body>
 </html>
