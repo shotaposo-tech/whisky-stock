@@ -8,44 +8,41 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); transition: all 0.2s ease; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; }
+        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); transition: transform 0.1s; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; }
+        .sortable-ghost { opacity: 0.3; transform: scale(0.95); }
         
-        /* カードの色をより濃く、鮮やかに設定 */
-        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.55), #020617); border-color: rgba(37, 99, 235, 0.9); }
-        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.5), #020617); border-color: rgba(16, 185, 129, 0.9); }
-        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.55), #020617); border-color: rgba(5, 150, 105, 0.9); }
-        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.55), #020617); border-color: rgba(245, 158, 11, 0.9); }
-        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.45), #020617); border-color: rgba(148, 163, 184, 0.8); }
-        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.55), #020617); border-color: rgba(71, 85, 105, 0.9); }
+        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.6), #020617); border-color: rgba(37, 99, 235, 0.9); }
+        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.55), #020617); border-color: rgba(16, 185, 129, 0.9); }
+        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.6), #020617); border-color: rgba(5, 150, 105, 0.9); }
+        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.6), #020617); border-color: rgba(245, 158, 11, 0.9); }
+        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.5), #020617); border-color: rgba(148, 163, 184, 0.8); }
+        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.6), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
-        .archive-card { filter: grayscale(0.8) contrast(1.2) opacity(0.5); border-style: dotted; }
-        
-        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; }
-        .slider-container { width: calc(100% - 95px); margin-top: 14px; position: relative; }
+        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
+        .slider-container { width: calc(100% - 60px); margin-top: 14px; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.25); height: 14px; border-radius: 7px; width: 100%; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.6); }
-        
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; }
-        .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
         
-        .stock-display { position: absolute; top: 22px; right: 90px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 2rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
+        .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
         
-        .whisky-name-text { display: inline-block; cursor: pointer; position: relative; z-index: 20; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        
+        /* 並び替え用ハンドル */
+        .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); cursor: grab; z-index: 30; }
+
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
     </style>
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
-        <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Master Collection</div>
+        <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Restoring Collection...</div>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
@@ -58,18 +55,9 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH LIST</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex justify-between items-center px-4 py-2 bg-slate-900/80 overflow-x-auto gap-2">
-                <span class="text-[9px] font-bold text-slate-500 uppercase shrink-0">Sort:</span>
-                <div class="flex gap-1.5">
-                    <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
-                    <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
-                    <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
-                    <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
-                </div>
-            </div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
+        <main id="whiskyList" class="flex-grow px-4 mt-4 pb-40"></main>
 
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
@@ -101,139 +89,119 @@
 
         let items = [];
         let currentPage = 'shelf';
-        let currentSort = 'sortOrder';
-        let tempName = "", editTargetId = null;
-        let lastTap = 0, tapTimer = null; 
+        let longPressTimer;
+
+        // ドラッグ並び替えの設定
+        const sortable = new Sortable(document.getElementById('whiskyList'), {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async () => {
+                const listEls = document.querySelectorAll('.whisky-card');
+                const batch = writeBatch(db);
+                listEls.forEach((el, idx) => {
+                    const id = el.getAttribute('data-id');
+                    batch.update(doc(db, "users", targetUID, "whiskies", id), { sortOrder: idx * 10 });
+                });
+                await batch.commit();
+            }
+        });
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            items = snap.docs.map(d => {
-                const data = d.data();
-                const stock = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
-                return { id: d.id, ...data, displayStock: stock };
-            });
+            items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             render();
         });
 
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            const stockBtn = document.getElementById('sort-remaining');
-            if (page === 'archive') { stockBtn.style.display = 'none'; if (currentSort === 'remaining') setSort('sortOrder');
-            } else { stockBtn.style.display = 'inline-block'; }
-            render();
-        };
-
-        window.setSort = (key) => {
-            currentSort = key;
-            ['sortOrder', 'category', 'abv', 'remaining'].forEach(k => {
-                const el = document.getElementById('sort-' + k);
-                if(el) el.classList.toggle('active', k === key);
-            });
             render();
         };
 
         const render = () => {
             const list = document.getElementById('whiskyList');
             let filtered = items.filter(w => {
-                if (currentPage === 'shelf') return w.displayStock > 0 && !w.isWish;
-                if (currentPage === 'archive') return w.displayStock <= 0 && !w.isWish;
-                if (currentPage === 'wish') return w.isWish === true;
-                return false;
+                const stock = w.remaining ?? w.percent ?? 100;
+                if (currentPage === 'shelf') return stock > 0 && !w.isWish;
+                if (currentPage === 'archive') return stock <= 0 && !w.isWish;
+                return w.isWish === true;
             });
 
-            filtered.sort((a, b) => {
-                if (currentSort === 'sortOrder') return a.sortOrder - b.sortOrder;
-                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
-                if (currentSort === 'remaining') return a.displayStock - b.displayStock;
-                return (a[currentSort] || "").toString().localeCompare((b[currentSort] || "").toString());
-            });
-
-            list.innerHTML = filtered.map((w, i) => {
+            list.innerHTML = filtered.map((w) => {
+                const stock = w.remaining ?? w.percent ?? 100;
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
+                
                 return `
-                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}">
-                    <div class="stock-display">${w.displayStock}%</div>
-                    <div class="pr-16 relative">
-                        <div class="flex flex-wrap items-center gap-2 mb-2 pr-12">
-                            <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
-                            <span class="tag" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
+                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-50' : ''}" data-id="${w.id}">
+                    <div class="stock-display">${stock}%</div>
+                    <div class="pr-12">
+                        <div class="flex flex-nowrap items-center gap-1.5 mb-2 overflow-x-hidden">
+                            <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
+                            <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
                         </div>
-                        <div>
-                            <h3 class="whisky-name-text font-black text-xl tracking-tighter leading-tight break-all" 
-                                onclick="event.stopPropagation(); handleDoubleTap('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                                ${w.name}
-                            </h3>
-                        </div>
+                        <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
+                            style="display:inline-block;"
+                            ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                            ontouchend="endPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')"
+                            ontouchmove="cancelPress()">
+                            ${w.name}
+                        </h3>
                     </div>
                     ${w.isWish ? `
-                        <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-all">GET & ADD TO SHELF</button>
+                        <button onclick="moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs">GET & ADD TO SHELF</button>
                     ` : `
-                        <div class="slider-container" onclick="event.stopPropagation()">
-                            <input type="range" min="0" max="100" step="5" value="${w.displayStock}" onchange="updateStock('${w.id}', this.value)" oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
+                        <div class="slider-container">
+                            <input type="range" min="0" max="100" step="5" value="${stock}" onchange="updateStock('${w.id}', this.value)" oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
-                    <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
-                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/50 rounded-xl border border-white/20 flex items-center justify-center text-xs active:bg-white/40">▲</button>
-                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/50 rounded-xl border border-white/20 flex items-center justify-center text-xs active:bg-white/40">▼</button>
+                    <div class="drag-handle">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
                     </div>
                 </div>`;
             }).join('');
         };
 
-        window.handleDoubleTap = (id, name) => {
-            const now = Date.now();
-            if (now - lastTap < 300) {
-                clearTimeout(tapTimer);
+        // 長押し処理：指が動いたらキャンセルすることでスクロールと干渉させない
+        window.startPress = (id, name) => {
+            longPressTimer = setTimeout(() => {
                 if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-            } else {
-                tapTimer = setTimeout(() => editName(id, name), 300);
-            }
-            lastTap = now;
+                longPressTimer = null;
+            }, 1000); // 1秒長押しで削除
         };
+        window.endPress = (id, name) => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                editName(id, name); // 短いタップなら名前編集
+            }
+        };
+        window.cancelPress = () => { clearTimeout(longPressTimer); longPressTimer = null; };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val), percent: parseInt(val) }); };
         window.editName = async (id, old) => { const n = prompt("銘柄名を変更", old); if (n && n !== old) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n }); };
         window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)`, old); if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || 40 }); };
         window.moveToShelf = async (id) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, remaining: 100, percent: 100 }); switchPage('shelf'); };
-        
-        window.moveItem = async (index, direction) => {
-            if (currentSort !== 'sortOrder') return;
-            const filtered = items.filter(w => (currentPage === 'wish' ? w.isWish : (currentPage === 'shelf' ? w.displayStock > 0 && !w.isWish : w.displayStock <= 0 && !w.isWish)));
-            const overallIndex = items.findIndex(item => item.id === filtered[index].id);
-            const targetOverallIndex = items.findIndex((item, idx) => {
-                if (direction < 0) return idx < overallIndex && items.slice(0, overallIndex).reverse().find(i => (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? i.displayStock > 0 && !i.isWish : i.displayStock <= 0 && !i.isWish))) === item;
-                return idx > overallIndex && items.slice(overallIndex + 1).find(i => (currentPage === 'wish' ? i.isWish : (currentPage === 'shelf' ? i.displayStock > 0 && !i.isWish : i.displayStock <= 0 && !i.isWish))) === item;
-            });
-            if (targetOverallIndex === -1) return;
-            const newItems = [...items]; [newItems[overallIndex], newItems[targetOverallIndex]] = [newItems[targetOverallIndex], newItems[overallIndex]];
-            const batch = writeBatch(db); newItems.forEach((item, idx) => batch.update(doc(db, "users", targetUID, "whiskies", item.id), { sortOrder: idx * 10 }));
-            await batch.commit();
-        };
 
         const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        
+        let tempName = "", editTargetId = null;
+
         document.getElementById('addBtn').onclick = () => {
             const n = prompt(currentPage === 'wish' ? "WISH銘柄を入力" : "新しい銘柄名を入力");
             if (n) { tempName = n; editTargetId = null; document.getElementById('editTargetName').innerText = n; openModal(categories); }
         };
 
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories); };
-        
         const openModal = (opts, isReg = false) => {
             document.getElementById('modal').classList.add('active');
-            document.getElementById('modalOptions').innerHTML = opts.map(o => `
-                <button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/20 shadow-xl ${isReg ? 'bg-slate-700' : 'btn-'+o}">${o}</button>
-            `).join('');
+            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800">${o}</button>`).join('');
         };
-
         window.selectCat = (c) => c === "Scotch" ? openModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
         const finalize = async (c, r) => {
             if (editTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { category: c, region: r });
-            } else { await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, percent: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
+            } else { await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
             closeModal();
         };
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
