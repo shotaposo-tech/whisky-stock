@@ -15,9 +15,9 @@
         
         .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; }
         
-        /* ドラッグ中の設定 */
-        .sortable-ghost { opacity: 0; } /* 元の位置のカードを完全に隠す */
-        .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 30px 60px rgba(0,0,0,0.8); z-index: 1000; border-color: rgba(255,255,255,0.5); }
+        /* ドラッグ中の設定：さらに見やすく */
+        .sortable-ghost { opacity: 0; } 
+        .sortable-drag { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 40px 80px rgba(0,0,0,0.9); z-index: 1000; border-color: rgba(255,255,255,0.4); background: #1e293b !important; }
 
         .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.65), #020617); border-color: rgba(37, 99, 235, 0.9); }
         .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.6), #020617); border-color: rgba(16, 185, 129, 0.9); }
@@ -27,15 +27,17 @@
         .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
-        .slider-container { width: calc(100% - 60px); margin-top: 14px; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.25); height: 14px; border-radius: 7px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.6); }
+        
+        /* スライダーをより細く、丸を小さく */
+        .slider-container { width: calc(100% - 60px); margin-top: 14px; padding-bottom: 4px; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; border: 2px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); margin-top: -1px; }
         
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 3px solid transparent; }
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
         
         .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
-        .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); cursor: grab; z-index: 30; }
+        .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); cursor: grab; z-index: 30; }
 
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
@@ -43,7 +45,7 @@
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
-        <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Restoring Collection...</div>
+        <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Master Collection</div>
     </div>
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
@@ -91,14 +93,15 @@
         let items = [];
         let currentPage = 'shelf';
         let longPressTimer;
-        let startX, startY; // 長押しキャンセル用の座標保持
+        let startX, startY;
 
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
-            animation: 200, // 少しゆっくり動かして高級感を出す
+            animation: 250,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            forceFallback: true, // iOSでの挙動を安定させる
+            forceFallback: true,
+            fallbackOnBody: true,
             onEnd: async () => {
                 const listEls = document.querySelectorAll('.whisky-card');
                 const batch = writeBatch(db);
@@ -137,20 +140,22 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 
                 return `
-                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-50' : ''}" data-id="${w.id}">
+                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
                     <div class="stock-display">${stock}%</div>
                     <div class="pr-12">
                         <div class="flex flex-nowrap items-center gap-1.5 mb-2 overflow-x-hidden">
                             <span class="tag" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                             <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
                         </div>
-                        <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
-                            style="display:inline-block; position:relative; z-index:40;"
-                            ontouchstart="startPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                            ontouchend="endPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')"
-                            ontouchmove="checkMove(event)">
-                            ${w.name}
-                        </h3>
+                        <div>
+                            <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
+                                style="display:inline-block; position:relative; z-index:40; padding-right:20px;"
+                                ontouchstart="startPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                                ontouchend="endPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')"
+                                ontouchmove="checkMove(event)">
+                                ${w.name}
+                            </h3>
+                        </div>
                     </div>
                     ${w.isWish ? `
                         <button onclick="moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs">GET & ADD TO SHELF</button>
@@ -172,14 +177,14 @@
             longPressTimer = setTimeout(() => {
                 if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 longPressTimer = null;
-            }, 800); // 削除までの時間を少し短縮（0.8秒）して快適に
+            }, 600); // 削除時間を少し短縮して反応良く
         };
 
         window.checkMove = (e) => {
             if (!longPressTimer) return;
             const moveX = Math.abs(e.touches[0].pageX - startX);
             const moveY = Math.abs(e.touches[0].pageY - startY);
-            if (moveX > 5 || moveY > 5) { // 5px以上動いたら「スクロール」とみなして削除をキャンセル
+            if (moveX > 15 || moveY > 15) { // 許容範囲を15pxに拡大
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
@@ -209,7 +214,7 @@
         window.openCatEdit = (id, name) => { editTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories); };
         const openModal = (opts, isReg = false) => {
             document.getElementById('modal').classList.add('active');
-            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800">${o}</button>`).join('');
+            document.getElementById('modalOptions').innerHTML = opts.map(o => `<button onclick="${isReg ? `selectReg('${o}')` : `selectCat('${o}')`}" class="p-4 rounded-xl font-bold text-white border border-white/10 bg-slate-800 shadow-lg">${o}</button>`).join('');
         };
         window.selectCat = (c) => c === "Scotch" ? openModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
