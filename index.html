@@ -12,40 +12,34 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        /* カード全体のスタイル：透過背景を基本に */
-        .whisky-card { border-radius: 24px; border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; }
+        /* カード全体のスタイル：色をより強調 */
+        .whisky-card { border-radius: 24px; border: 3px solid rgba(255,255,255,0.1); transition: all 0.2s ease; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; background: #1e293b; }
         
-        /* カテゴリ別の淡い背景色 */
-        .cat-Scotch { background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), #1e293b); border-color: rgba(37, 99, 235, 0.4); }
-        .cat-Japanese { background: linear-gradient(135deg, rgba(6, 78, 59, 0.25), #1e293b); border-color: rgba(6, 78, 59, 0.5); }
-        .cat-Irish { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), #1e293b); border-color: rgba(16, 185, 129, 0.4); }
-        .cat-American { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), #1e293b); border-color: rgba(245, 158, 11, 0.4); }
-        .cat-Blended { background: linear-gradient(135deg, rgba(148, 163, 184, 0.1), #1e293b); border-color: rgba(148, 163, 184, 0.3); }
-        .cat-Others { background: linear-gradient(135deg, rgba(51, 65, 85, 0.2), #1e293b); border-color: rgba(51, 65, 85, 0.4); }
+        /* カテゴリ別の淡くも鮮やかな背景色とクッキリした枠線 */
+        .cat-Scotch { background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), #111827); border-color: rgba(37, 99, 235, 0.6); }
+        .cat-Japanese { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), #111827); border-color: rgba(16, 185, 129, 0.6); }
+        .cat-Irish { background: linear-gradient(135deg, rgba(5, 150, 105, 0.25), #111827); border-color: rgba(5, 150, 105, 0.6); }
+        .cat-American { background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), #111827); border-color: rgba(245, 158, 11, 0.6); }
+        .cat-Blended { background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), #111827); border-color: rgba(148, 163, 184, 0.5); }
+        .cat-Others { background: linear-gradient(135deg, rgba(51, 65, 85, 0.3), #111827); border-color: rgba(71, 85, 105, 0.6); }
 
-        .archive-card { filter: grayscale(0.8) opacity(0.6); border-style: dashed; }
-        .wish-card { border: 2px solid #334155; background: #1e293b; }
+        .archive-card { filter: grayscale(0.7) opacity(0.6); border-style: dashed; }
         
-        /* カテゴリボタン（追加・編集用） */
-        .btn-Scotch { background: #1d4ed8; } .btn-Japanese { background: #064e3b; }
-        .btn-Irish { background: #059669; } .btn-American { background: #b45309; }
-        .btn-Blended { background: #475569; } .btn-Others { background: #1e293b; }
+        .tag { font-size: 10px; padding: 2px 10px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; color: #fbbf24; }
+        .slider-container { width: calc(100% - 95px); margin-top: 14px; position: relative; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 30px; width: 30px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
         
-        .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; }
-        .slider-container { width: calc(100% - 85px); margin-top: 14px; position: relative; z-index: 10; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%; border: 2px solid white; background: white; }
-        
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 10px; background: #1e293b; border: 1px solid #334155; transition: 0.2s; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
-        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.7rem; text-align: center; color: #475569; letter-spacing: 0.05em; border-bottom: 2px solid transparent; }
-        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
         
-        /* 残量表示：少し左に寄せる（right: 60px -> 80px） */
-        .stock-display { position: absolute; top: 18px; right: 80px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.6rem; opacity: 0.9; }
+        /* 残量表示：左に寄せて視認性アップ */
+        .stock-display { position: absolute; top: 20px; right: 90px; font-family: ui-monospace, monospace; pointer-events: none; font-weight: 900; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -108,6 +102,7 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         let tempName = "", editTargetId = null;
+        let lastTap = 0; // ダブルタップ用
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -123,8 +118,6 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
-            
-            // Archiveの時はSTOCKソートボタンを隠す
             const stockBtn = document.getElementById('sort-remaining');
             if (page === 'archive') {
                 stockBtn.style.display = 'none';
@@ -132,7 +125,6 @@
             } else {
                 stockBtn.style.display = 'inline-block';
             }
-            
             render();
         };
 
@@ -164,31 +156,52 @@
             list.innerHTML = filtered.map((w, i) => {
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.category} / ${w.region}` : (w.category || 'Others');
                 const abvBadge = `<span class="tag" onclick="event.stopPropagation(); editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>`;
-                const pressEvents = `onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" onmouseup="cancelPress()" ontouchend="cancelPress()"`;
 
                 return `
-                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}" ${pressEvents}>
+                <div class="whisky-card p-6 cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'archive-card' : ''}">
                     <div class="stock-display">${w.displayStock}%</div>
                     <div class="pr-16">
                         <div class="flex flex-wrap items-center gap-2 mb-2 pr-12">
                             <span class="tag" onclick="event.stopPropagation(); openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp} ✎</span>
                             ${abvBadge}
                         </div>
-                        <h3 class="font-black text-xl tracking-tighter leading-tight break-all" onclick="event.stopPropagation(); editName('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.name}</h3>
+                        <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
+                            onclick="handleDoubleTap('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                            ${w.name}
+                        </h3>
                     </div>
                     ${w.isWish ? `
-                        <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs uppercase shadow-lg">GET & ADD TO SHELF</button>
+                        <button onclick="event.stopPropagation(); moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-all">GET & ADD TO SHELF</button>
                     ` : `
                         <div class="slider-container">
                             <input type="range" min="0" max="100" step="5" value="${w.displayStock}" onchange="updateStock('${w.id}', this.value)" oninput="event.stopPropagation(); this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
                     <div class="absolute right-3 top-0 bottom-0 flex flex-col justify-center space-y-2">
-                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs">▲</button>
-                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs">▼</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, -1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs active:bg-white/20">▲</button>
+                        <button onclick="event.stopPropagation(); moveItem(${i}, 1)" class="w-11 h-12 bg-black/30 rounded-xl border border-white/5 flex items-center justify-center text-xs active:bg-white/20">▼</button>
                     </div>
                 </div>`;
             }).join('');
+        };
+
+        // 削除ミス防止：ダブルタップで削除
+        window.handleDoubleTap = (id, name) => {
+            const now = Date.now();
+            const TIMESPAN = 300; // 0.3秒以内の2回タップを検知
+            if (now - lastTap < TIMESPAN) {
+                if(confirm(`「${name}」を削除しますか？`)) {
+                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
+                }
+            } else {
+                // シングルタップ時は名前編集（または何もしない設定も可）
+                setTimeout(() => {
+                    if (Date.now() - lastTap >= TIMESPAN) {
+                        editName(id, name);
+                    }
+                }, TIMESPAN);
+            }
+            lastTap = now;
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val), percent: parseInt(val) }); };
@@ -196,10 +209,6 @@
         window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)`, old); if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || 40 }); };
         window.moveToShelf = async (id) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, remaining: 100, percent: 100 }); switchPage('shelf'); };
         
-        let pressTimer;
-        window.startPress = (id, name) => { pressTimer = setTimeout(async () => { if(confirm(`「${name}」を削除しますか？`)) await deleteDoc(doc(db, "users", targetUID, "whiskies", id)); }, 800); };
-        window.cancelPress = () => clearTimeout(pressTimer);
-
         window.moveItem = async (index, direction) => {
             if (currentSort !== 'sortOrder') return;
             const filtered = items.filter(w => (currentPage === 'wish' ? w.isWish : (currentPage === 'shelf' ? w.displayStock > 0 && !w.isWish : w.displayStock <= 0 && !w.isWish)));
