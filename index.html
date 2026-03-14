@@ -11,7 +11,7 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; }
+        .whisky-card { border-radius: 20px; border: 3px solid #4b5563; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; background: #1e293b; margin-bottom: 16px; }
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; white-space: nowrap; display: inline-block; }
         .slider-container { width: calc(100% - 75px); margin-top: 14px; position: relative; z-index: 10; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.15); height: 12px; border-radius: 6px; width: 100%; }
@@ -23,35 +23,28 @@
 </head>
 <body>
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-900 z-50">
-        <div class="text-amber-500 font-bold animate-pulse">Loading Your Shelf...</div>
+        <div class="text-amber-500 font-bold animate-pulse">Restoring Your Collection...</div>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden bg-slate-900 z-40">
-        <h1 class="text-4xl italic gold-text uppercase mb-12">Whisky Stock</h1>
-        <button id="loginBtn" class="bg-white text-black font-black py-4 px-8 rounded-2xl shadow-xl">Googleでログイン</button>
-    </div>
-
-    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative">
         <header class="bg-black/95 border-b border-amber-900/30 sticky top-0 z-30">
             <div class="px-6 py-4 flex justify-between items-center">
                 <div class="w-8"></div>
                 <h1 class="text-xl italic gold-text uppercase">Whisky Stock</h1>
-                <button onclick="logout()" class="text-[9px] font-bold text-slate-500 border border-slate-700 px-2 py-1 rounded">OUT</button>
+                <div class="w-8"></div>
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
-                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
         </header>
-        <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
-        <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30">＋</button>
+        <main id="whiskyList" class="flex-grow px-4 mt-4 pb-40"></main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ",
@@ -65,7 +58,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
         setPersistence(auth, browserLocalPersistence);
 
         let items = [];
@@ -73,50 +65,54 @@
 
         onAuthStateChanged(auth, (user) => {
             document.getElementById('loading-overlay').classList.add('hidden');
-            if (user) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                
-                // 【重要修正】スクショの階層（users > ID > whiskies）に固定
-                // IDの揺れを吸収するため、まずは固定のパスで試行します
-                const path = "AIatoo8mPKZaErVgrJfOTVEDICs2"; 
-                onSnapshot(query(collection(db, "users", path, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
-                    items = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    render();
-                }, (err) => {
-                    // もし上記でエラーなら、ログイン中のUIDで再試行
-                    onSnapshot(query(collection(db, "users", user.uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
-                        items = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                        render();
-                    });
+            // パスは「users」の下のあなたのIDに固定
+            const uid = "AIatoo8mPKZaErVgrJfOTVEDICs2";
+            const q = query(collection(db, "users", uid, "whiskies"), orderBy("name", "asc"));
+            
+            onSnapshot(q, (snap) => {
+                items = snap.docs.map(d => {
+                    const data = d.data();
+                    // 【最重要修正】remainingがなければpercentを使い、どっちもなければ100にする
+                    const stockVal = data.remaining !== undefined ? data.remaining : (data.percent !== undefined ? data.percent : 100);
+                    return { id: d.id, ...data, displayStock: stockVal };
                 });
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
-            }
+                render();
+            });
         });
 
-        // ログイン・ログアウト・切替・描画・更新処理
-        document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
-        window.logout = () => signOut(auth);
-        window.switchPage = (page) => { currentPage = page; render(); };
-        window.updateStock = (id, val) => {
-            // 更新時も正しいパス（users直下）を指定
-            const path = "AIatoo8mPKZaErVgrJfOTVEDICs2";
-            updateDoc(doc(db, "users", path, "whiskies", id), { remaining: parseInt(val) });
+        window.switchPage = (page) => {
+            currentPage = page;
+            document.getElementById('tab-shelf').classList.toggle('active', page === 'shelf');
+            document.getElementById('tab-archive').classList.toggle('active', page === 'archive');
+            render();
+        };
+
+        window.updateStock = async (id, val) => {
+            const uid = "AIatoo8mPKZaErVgrJfOTVEDICs2";
+            const whiskyRef = doc(db, "users", uid, "whiskies", id);
+            // 更新時は両方のフィールドを書き換えて、次回からどっちでも読み込めるようにします
+            await updateDoc(whiskyRef, { 
+                remaining: parseInt(val),
+                percent: parseInt(val) 
+            });
         };
 
         const render = () => {
             const list = document.getElementById('whiskyList');
-            let filtered = items.filter(w => (currentPage === 'shelf' ? w.remaining > 0 : (currentPage === 'wish' ? w.isWish : w.remaining <= 0)));
+            const filtered = items.filter(w => (currentPage === 'shelf' ? w.displayStock > 0 : w.displayStock <= 0));
+            
             list.innerHTML = filtered.map(w => `
                 <div class="whisky-card p-5">
-                    <div class="stock-display text-white font-black text-2xl">${w.remaining}%</div>
+                    <div class="stock-display text-white font-black text-2xl">${w.displayStock}%</div>
                     <div class="pr-16">
-                        <div class="flex gap-2 mb-2"><span class="tag bg-amber-900/40 text-amber-400">${w.category}</span></div>
+                        <div class="flex gap-2 mb-2">
+                            <span class="tag bg-amber-900/40 text-amber-400">${w.category || 'Whisky'}</span>
+                        </div>
                         <h3 class="font-black text-xl">${w.name}</h3>
                     </div>
-                    <div class="slider-container"><input type="range" min="0" max="100" step="5" value="${w.remaining}" onchange="updateStock('${w.id}', this.value)"></div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" step="5" value="${w.displayStock}" onchange="updateStock('${w.id}', this.value)">
+                    </div>
                 </div>
             `).join('');
         };
