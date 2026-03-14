@@ -26,8 +26,6 @@
         .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
-        
-        /* フレイバーバッジ：未設定時もタップしやすいよう padding を確保 */
         .flv-tag { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; margin-left: 8px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); display: inline-block; }
         .flv-empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; }
 
@@ -46,6 +44,7 @@
 
         #modal { display: none; }
         #modal.active { display: flex; z-index: 100; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -140,6 +139,14 @@
         window.switchPage = (page) => {
             currentPage = page;
             ['shelf', 'wish', 'archive'].forEach(p => document.getElementById(`tab-${p}`).classList.toggle('active', p === page));
+            
+            // ARCHIVEの時は残量ソートボタンを消す
+            const stockBtn = document.getElementById('sort-remaining');
+            if(stockBtn) stockBtn.style.display = (page === 'archive') ? 'none' : 'block';
+            
+            // ARCHIVE移動時にSTOCKソート中だったらCUSTOMに戻す
+            if(page === 'archive' && currentSort === 'remaining') setSort('sortOrder');
+            
             render();
         };
 
