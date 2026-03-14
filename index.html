@@ -40,6 +40,7 @@
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center">
         <div class="text-amber-500 font-bold animate-pulse">Initializing...</div>
     </div>
+
     <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-center p-6 text-center hidden">
         <h1 class="text-4xl italic gold-text uppercase tracking-[0.3em] mb-4">Whisky Stock</h1>
         <p class="text-slate-400 mb-12 font-bold text-sm">Cloud Sync Enabled</p>
@@ -48,6 +49,7 @@
             Googleでログイン
         </button>
     </div>
+
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
         <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/30 sticky top-0 z-50">
             <div class="px-6 py-4 flex justify-between items-center">
@@ -70,6 +72,7 @@
             </div>
         </header>
         <main id="whiskyList" class="flex-grow px-4 mt-4 space-y-4 pb-40"></main>
+        
         <div id="modal" class="fixed inset-0 bg-black/90 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl border border-white/10">
                 <span id="editCatTargetName" class="editing-name">---</span>
@@ -77,6 +80,7 @@
                 <button onclick="closeModal()" class="mt-6 w-full text-slate-400 text-sm font-bold py-2">CANCEL</button>
             </div>
         </div>
+
         <button id="addBtn" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30 active:scale-90 border-2 border-amber-200/30">
             <span>＋</span>
         </button>
@@ -127,9 +131,9 @@
             }
         });
 
-        // 修正ポイント：直接 uid の下の whiskies を参照
+        // 修正点：白州・山崎がある「users」フォルダをしっかり参照
         function initApp(uid) {
-            onSnapshot(query(collection(db, uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
+            onSnapshot(query(collection(db, "users", uid, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
                 items = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 render();
             });
@@ -194,11 +198,11 @@
             }).join('');
         };
 
-        // 修正ポイント：各関数から "users" 階層を削除
-        window.editName = async (id, old) => { const n = prompt(`銘柄名を編集`, old); if (n && n !== old) await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { name: n }); };
-        window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)を入力`, old); if (n !== null) await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 40 }); };
-        window.moveToShelf = async (id) => { if(confirm("SHELF(在庫)に移動しますか？")) { await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 }); switchPage('shelf'); } };
-        window.updateStock = async (id, val) => { await updateDoc(doc(db, auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
+        // 修正点：各保存機能も「users」フォルダを使用
+        window.editName = async (id, old) => { const n = prompt(`銘柄名を編集`, old); if (n && n !== old) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { name: n }); };
+        window.editAbv = async (id, name, old) => { const n = prompt(`"${name}" の度数(%)を入力`, old); if (n !== null) await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { abv: parseFloat(n) || 40 }); };
+        window.moveToShelf = async (id) => { if(confirm("SHELF(在庫)に移動しますか？")) { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { isWish: false, remaining: 100 }); switchPage('shelf'); } };
+        window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id), { remaining: parseInt(val) }); };
         
         const categories = ["Scotch", "Japanese", "Irish", "American", "Blended", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
@@ -211,10 +215,9 @@
         window.selectCat = (c) => c === "Scotch" ? showModal(scotchRegions, true) : finalize(c, "");
         window.selectReg = (r) => finalize("Scotch", r);
         
-        // 修正ポイント：ここも "users" を削除
         const finalize = async (c, r) => {
-            if (editTargetId) { await updateDoc(doc(db, auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
-            } else { await addDoc(collection(db, auth.currentUser.uid, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
+            if (editTargetId) { await updateDoc(doc(db, "users", auth.currentUser.uid, "whiskies", editTargetId), { category: c, region: r });
+            } else { await addDoc(collection(db, "users", auth.currentUser.uid, "whiskies"), { name: tempName, category: c, region: r, abv: 40, remaining: 100, isWish: (currentPage === 'wish'), sortOrder: items.length * 10 }); }
             closeModal();
         };
         window.closeModal = () => { document.getElementById('modal').classList.remove('active'); editTargetId = null; };
@@ -229,7 +232,7 @@
             });
             if (targetOverallIndex === -1) return;
             const newItems = [...items]; [newItems[overallIndex], newItems[targetOverallIndex]] = [newItems[targetOverallIndex], newItems[overallIndex]];
-            const batch = writeBatch(db); newItems.forEach((item, idx) => batch.update(doc(db, auth.currentUser.uid, "whiskies", item.id), { sortOrder: idx * 10 }));
+            const batch = writeBatch(db); newItems.forEach((item, idx) => batch.update(doc(db, "users", auth.currentUser.uid, "whiskies", item.id), { sortOrder: idx * 10 }));
             await batch.commit();
         };
 
@@ -237,7 +240,7 @@
         window.startPress = (id, name) => { 
             cancelPress(); 
             pressTimer = setTimeout(async () => { 
-                if(confirm(`"${name}" を削除しますか？`)) await deleteDoc(doc(db, auth.currentUser.uid, "whiskies", id)); 
+                if(confirm(`"${name}" を削除しますか？`)) await deleteDoc(doc(db, "users", auth.currentUser.uid, "whiskies", id)); 
             }, 1200); 
         };
         window.cancelPress = () => { if(pressTimer) clearTimeout(pressTimer); };
