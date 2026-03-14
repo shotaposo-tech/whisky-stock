@@ -13,15 +13,18 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); transition: transform 0.1s; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; }
-        .sortable-ghost { opacity: 0.3; transform: scale(0.95); }
+        .whisky-card { border-radius: 24px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.8); position: relative; overflow: hidden; margin-bottom: 1rem; background: #020617; }
         
-        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.6), #020617); border-color: rgba(37, 99, 235, 0.9); }
-        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.55), #020617); border-color: rgba(16, 185, 129, 0.9); }
-        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.6), #020617); border-color: rgba(5, 150, 105, 0.9); }
-        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.6), #020617); border-color: rgba(245, 158, 11, 0.9); }
-        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.5), #020617); border-color: rgba(148, 163, 184, 0.8); }
-        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.6), #020617); border-color: rgba(71, 85, 105, 0.9); }
+        /* ドラッグ中の設定 */
+        .sortable-ghost { opacity: 0; } /* 元の位置のカードを完全に隠す */
+        .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 30px 60px rgba(0,0,0,0.8); z-index: 1000; border-color: rgba(255,255,255,0.5); }
+
+        .cat-Scotch { background: linear-gradient(145deg, rgba(37, 99, 235, 0.65), #020617); border-color: rgba(37, 99, 235, 0.9); }
+        .cat-Japanese { background: linear-gradient(145deg, rgba(16, 185, 129, 0.6), #020617); border-color: rgba(16, 185, 129, 0.9); }
+        .cat-Irish { background: linear-gradient(145deg, rgba(5, 150, 105, 0.65), #020617); border-color: rgba(5, 150, 105, 0.9); }
+        .cat-American { background: linear-gradient(145deg, rgba(245, 158, 11, 0.65), #020617); border-color: rgba(245, 158, 11, 0.9); }
+        .cat-Blended { background: linear-gradient(145deg, rgba(148, 163, 184, 0.55), #020617); border-color: rgba(148, 163, 184, 0.8); }
+        .cat-Others { background: linear-gradient(145deg, rgba(51, 65, 85, 0.65), #020617); border-color: rgba(71, 85, 105, 0.9); }
 
         .tag { font-size: 9px; padding: 2px 8px; border-radius: 99px; font-weight: 800; background: rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.4); color: #fbbf24; white-space: nowrap; }
         .slider-container { width: calc(100% - 60px); margin-top: 14px; }
@@ -32,8 +35,6 @@
         .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
         
         .stock-display { position: absolute; top: 20px; right: 60px; font-family: ui-monospace, monospace; font-weight: 900; font-size: 1.8rem; text-shadow: 0 4px 10px rgba(0,0,0,1); pointer-events: none; }
-        
-        /* 並び替え用ハンドル */
         .drag-handle { width: 44px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); cursor: grab; z-index: 30; }
 
         #modal { display: none; }
@@ -90,12 +91,14 @@
         let items = [];
         let currentPage = 'shelf';
         let longPressTimer;
+        let startX, startY; // 長押しキャンセル用の座標保持
 
-        // ドラッグ並び替えの設定
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
-            animation: 150,
+            animation: 200, // 少しゆっくり動かして高級感を出す
             ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            forceFallback: true, // iOSでの挙動を安定させる
             onEnd: async () => {
                 const listEls = document.querySelectorAll('.whisky-card');
                 const batch = writeBatch(db);
@@ -142,17 +145,17 @@
                             <span class="tag" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}% ✎</span>
                         </div>
                         <h3 class="font-black text-xl tracking-tighter leading-tight break-all" 
-                            style="display:inline-block;"
-                            ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                            style="display:inline-block; position:relative; z-index:40;"
+                            ontouchstart="startPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
                             ontouchend="endPress('${w.id}', '${w.name.replace(/'/g, "\\'")}')"
-                            ontouchmove="cancelPress()">
+                            ontouchmove="checkMove(event)">
                             ${w.name}
                         </h3>
                     </div>
                     ${w.isWish ? `
                         <button onclick="moveToShelf('${w.id}')" class="mt-4 w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs">GET & ADD TO SHELF</button>
                     ` : `
-                        <div class="slider-container">
+                        <div class="slider-container" onclick="event.stopPropagation()">
                             <input type="range" min="0" max="100" step="5" value="${stock}" onchange="updateStock('${w.id}', this.value)" oninput="this.closest('.whisky-card').querySelector('.stock-display').innerText=this.value+'%'">
                         </div>
                     `}
@@ -163,20 +166,31 @@
             }).join('');
         };
 
-        // 長押し処理：指が動いたらキャンセルすることでスクロールと干渉させない
-        window.startPress = (id, name) => {
+        window.startPress = (e, id, name) => {
+            startX = e.touches[0].pageX;
+            startY = e.touches[0].pageY;
             longPressTimer = setTimeout(() => {
                 if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 longPressTimer = null;
-            }, 1000); // 1秒長押しで削除
+            }, 800); // 削除までの時間を少し短縮（0.8秒）して快適に
         };
+
+        window.checkMove = (e) => {
+            if (!longPressTimer) return;
+            const moveX = Math.abs(e.touches[0].pageX - startX);
+            const moveY = Math.abs(e.touches[0].pageY - startY);
+            if (moveX > 5 || moveY > 5) { // 5px以上動いたら「スクロール」とみなして削除をキャンセル
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
         window.endPress = (id, name) => {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
-                editName(id, name); // 短いタップなら名前編集
+                editName(id, name);
             }
         };
-        window.cancelPress = () => { clearTimeout(longPressTimer); longPressTimer = null; };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val), percent: parseInt(val) }); };
         window.editName = async (id, old) => { const n = prompt("銘柄名を変更", old); if (n && n !== old) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n }); };
