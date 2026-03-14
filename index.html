@@ -13,17 +13,20 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
+        /* カード基本スタイル */
+        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; transition: transform 0.1s; }
         
+        /* ドラッグ中の見た目 */
         .sortable-ghost { opacity: 0 !important; } 
         .sortable-drag { opacity: 0.95; transform: scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.8); z-index: 1000; }
 
-        .cat-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.25), #020617); border-color: rgba(37, 99, 235, 0.6); }
-        .cat-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25), #020617); border-color: rgba(16, 185, 129, 0.6); }
-        .cat-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.25), #020617); border-color: rgba(5, 150, 105, 0.6); }
-        .cat-American { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.25), #020617); border-color: rgba(245, 158, 11, 0.6); }
-        .cat-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.15), #020617); border-color: rgba(148, 163, 184, 0.5); }
-        .cat-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.25), #020617); border-color: rgba(71, 85, 105, 0.6); }
+        /* カテゴリーカラー（カード & ボタン共通） */
+        .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
+        .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
+        .color-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.3), #020617) !important; border-color: rgba(5, 150, 105, 0.8) !important; }
+        .color-American { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.3), #020617) !important; border-color: rgba(245, 158, 11, 0.8) !important; }
+        .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
+        .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
 
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
         .pos-name { position: absolute; top: 55%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; }
@@ -52,6 +55,10 @@
 
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
+
+        /* モーダル内ボタン */
+        .modal-btn { padding: 1rem; border-radius: 1rem; font-weight: 800; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
+        .modal-btn:active { transform: scale(0.95); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -69,7 +76,7 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex items-center justify-center px-4 py-2 bg-slate-900/80 gap-2">
+            <div id="sort-bar" class="flex items-center justify-center px-4 py-2 bg-slate-900/80 gap-2 overflow-x-auto no-scrollbar">
                 <button onclick="setSort('sortOrder')" id="sort-sortOrder" class="sort-btn active">CUSTOM</button>
                 <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
                 <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
@@ -78,7 +85,7 @@
             </div>
         </header>
 
-        <main id="whiskyList" class="flex-grow px-4 mt-4 pb-40"></main>
+        <main id="whiskyList" class="flex-grow px-4 pt-4 pb-40"></main>
 
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
@@ -104,8 +111,8 @@
             appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const firebase_app = initializeApp(firebaseConfig);
+        const db = getFirestore(firebase_app);
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [];
@@ -114,11 +121,13 @@
         let lastTap = 0;
         let tapTimer = null;
 
+        // ドラッグ設定
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
-            animation: 150,
+            animation: 200,
             ghostClass: 'sortable-ghost', 
             dragClass: 'sortable-drag',
+            forceFallback: true, // モバイルでの可動域を安定させる
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
@@ -177,7 +186,7 @@
                 const catDisp = (w.category === 'Scotch' && w.region) ? `${w.region}` : (w.category || 'Category');
                 
                 return `
-                <div class="whisky-card cat-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
+                <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
@@ -203,7 +212,7 @@
             }).join('');
         };
 
-        // Logic
+        // UI 処理
         window.handleTap = (e, id, name) => {
             const now = Date.now();
             if (now - lastTap < 300) {
@@ -216,8 +225,6 @@
         };
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
         window.editName = async (id, old) => { const n = prompt("銘柄名を変更", old); if (n && n !== old) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n }); };
-        
-        // 度数編集も空スタートに
         window.editAbv = async (id, name, old) => { 
             const n = prompt(`"${name}" の度数(%)`, ""); 
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
@@ -227,8 +234,9 @@
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
         
-        let tempName = "", tempCat = "", tempReg = "", tempAbv = 40, editTargetId = null;
+        let tempName = "", tempCat = "", tempReg = "", tempAbv = 40, tempFlv = "", editTargetId = null;
         
+        // 追加ボタン
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("銘柄名を入力");
             if (!n) return;
@@ -241,11 +249,7 @@
             tempName = n;
             editTargetId = null;
 
-            // 度数入力を空デフォルトに。入力なしなら40
-            const a = prompt(`"${n}" の度数(%)を入力`, "");
-            if (a === null) return;
-            tempAbv = parseFloat(a) || 40;
-
+            // フロー：銘柄名 → カテゴリー（ここからモーダル開始）
             document.getElementById('editTargetName').innerText = n;
             openModal(categories, 'cat');
         };
@@ -256,8 +260,9 @@
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
-                const colorClass = mode === 'cat' ? `cat-${o}` : 'bg-slate-800';
-                return `<button onclick="handleModalSelect('${o}', '${mode}')" class="p-4 rounded-xl font-bold text-white border border-white/10 ${colorClass}">${o}</button>`;
+                // カテゴリー選択時のみ、色分けクラスを適用
+                const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
+                return `<button onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
             }).join('');
         };
 
@@ -270,11 +275,20 @@
                 tempReg = val;
                 openModal(flavors, 'flv');
             } else if (mode === 'flv') {
-                finalize(tempCat, tempReg, val === "None" ? "" : val);
+                tempFlv = val === "None" ? "" : val;
+                askAbvFinal(); // 最後に度数を聞く
             } else if (mode === 'flv-only') {
                 await updateDoc(doc(db, "users", targetUID, "whiskies", editTargetId), { flavor: val === "None" ? "" : val });
                 closeModal();
             }
+        };
+
+        // 最後に入力ダイアログで度数を確認して完了
+        const askAbvFinal = async () => {
+            closeModal();
+            const a = prompt(`"${tempName}" の度数(%)を入力`, "");
+            tempAbv = (a === null || a === "") ? 40 : parseFloat(a);
+            finalize(tempCat, tempReg, tempFlv);
         };
 
         const finalize = async (c, r, f) => {
@@ -293,7 +307,6 @@
                     sortOrder: minOrder - 10 
                 }); 
             }
-            closeModal();
         };
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
     </script>
