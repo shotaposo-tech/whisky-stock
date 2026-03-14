@@ -13,8 +13,13 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         
-        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
+        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; transition: transform 0.1s; }
         
+        /* ドラッグ中の元の場所（ゴースト）を半透明にして二重感をなくす */
+        .sortable-ghost { opacity: 0.2; border: 2px dashed rgba(255,255,255,0.3); }
+        /* ドラッグ中の指の下のカード */
+        .sortable-drag { opacity: 0.9; transform: scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+
         .cat-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.25), #020617); border-color: rgba(37, 99, 235, 0.6); }
         .cat-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25), #020617); border-color: rgba(16, 185, 129, 0.6); }
         .cat-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.25), #020617); border-color: rgba(5, 150, 105, 0.6); }
@@ -22,10 +27,7 @@
         .cat-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.15), #020617); border-color: rgba(148, 163, 184, 0.5); }
         .cat-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.25), #020617); border-color: rgba(71, 85, 105, 0.6); }
 
-        /* 左上の情報配置 */
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        
-        /* 銘柄名の配置：スペックと被らないように調整 */
         .pos-name { position: absolute; top: 55%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; }
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); margin-top: 10px; }
 
@@ -42,13 +44,12 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; pointer-events: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-        .drag-handle { width: 54px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.15); cursor: grab; z-index: 30; }
-        .whisky-card:active .drag-handle { color: #f59e0b; }
-
+        /* ドラッグハンドル：透明感アップ */
+        .drag-handle { width: 54px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.12); cursor: grab; z-index: 30; }
+        
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
         
-        /* ソートボタン：中央寄せ */
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
@@ -116,9 +117,17 @@
         let lastTap = 0;
         let tapTimer = null;
 
+        // 並べ替え設定の強化
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
-            animation: 250,
+            animation: 150,
+            delay: 150, // 0.15秒長押しでドラッグ開始（誤作動防止）
+            delayOnTouchOnly: true,
+            ghostClass: 'sortable-ghost', // 元の場所にあるカードのスタイル
+            dragClass: 'sortable-drag',   // 指で動かしているカードのスタイル
+            onStart: () => {
+                if(window.navigator.vibrate) window.navigator.vibrate(5); // 掴んだ時に微かに振動（対応端末のみ）
+            },
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
                 const listEls = document.querySelectorAll('.whisky-card');
@@ -141,10 +150,8 @@
         window.setSort = (k) => { currentSort = k; render(); };
         window.switchPage = (p) => { 
             currentPage = p; 
-            // ソートボタンの表示切り替え（ArchiveならSTOCKを消す）
             const stockBtn = document.getElementById('sort-remaining');
             if (stockBtn) stockBtn.style.display = (p === 'archive') ? 'none' : 'block';
-            
             ['shelf', 'wish', 'archive'].forEach(t => { 
                 const el = document.getElementById(`tab-${t}`);
                 if(el) el.classList.toggle('active', t === p); 
@@ -161,7 +168,6 @@
                 return w.isWish === true;
             });
 
-            // ソート処理
             if (currentSort !== 'sortOrder') {
                 filtered.sort((a, b) => {
                     if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
@@ -172,7 +178,6 @@
                 });
             }
 
-            // UI更新
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`sort-${currentSort}`).classList.add('active');
 
@@ -212,7 +217,7 @@
             }).join('');
         };
 
-        // Logic (Interactions)
+        // UI Interactions
         window.handleTap = (e, id, name) => {
             const now = Date.now();
             if (now - lastTap < 300) {
