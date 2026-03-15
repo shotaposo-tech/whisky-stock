@@ -97,9 +97,10 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        let nameTimer = null;
+        // タップ判定用
+        let lastTapTime = 0;
+        let tapTimer = null;
         let memoTimer = null;
-        let longPressed = false;
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -146,11 +147,7 @@
                     <div class="pos-flv" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
-                    <div class="pos-name" 
-                        onmousedown="nameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        onmouseup="nameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')"
-                        ontouchstart="nameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        ontouchend="nameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                    <div class="pos-name" onclick="handleBottleNameClick(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
@@ -173,30 +170,32 @@
             }).join('');
         };
 
-        // --- ボトル名操作（提案いただいた鉄壁ロジック） ---
-        window.nameDown = (e, id, name) => {
-            longPressed = false;
-            nameTimer = setTimeout(() => {
-                longPressed = true;
+        // --- ボトル名クリック操作（シングル/ダブル切り分け） ---
+        window.handleBottleNameClick = (e, id, name) => {
+            const currentTime = new Date().getTime();
+            const tapGap = currentTime - lastTapTime;
+
+            if (tapGap < 250 && tapGap > 0) {
+                // 【ダブルタップ】削除処理
+                clearTimeout(tapTimer);
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-                clearTimeout(nameTimer); // 提案通り追加
-            }, 800);
-        };
-        window.nameUp = (e, id, name) => {
-            clearTimeout(nameTimer);
-            if (longPressed) {
-                longPressed = false; // フラグをリセットして終了
-                return;
-            }
-            const n = prompt("銘柄名を変更", name);
-            if (n && n !== name) {
-                updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                lastTapTime = 0;
+            } else {
+                // 【シングルタップ候補】少し待って名前変更
+                lastTapTime = currentTime;
+                tapTimer = setTimeout(() => {
+                    const n = prompt("銘柄名を変更", name);
+                    if (n && n !== name) {
+                        updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                    }
+                    lastTapTime = 0;
+                }, 250);
             }
         };
 
-        // --- 残量部分操作 ---
+        // --- 残量部分操作（メモ長押しは維持） ---
         window.memoDown = (e, id, name, currentMemo) => {
             memoTimer = setTimeout(() => {
                 const m = prompt(`「${name}」のメモを入力`, currentMemo);
