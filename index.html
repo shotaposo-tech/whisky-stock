@@ -41,6 +41,7 @@
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
         .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; word-break: break-all; }
+        .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -70,7 +71,10 @@
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
                 <div id="modalOptions" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto"></div>
-                <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2">CANCEL</button>
+                <div id="multiControls" class="mt-6 flex gap-3 hidden">
+                    <button onclick="finalizeMultiFlv()" id="flvConfirmBtn" class="flex-grow bg-amber-600 text-white font-black py-4 rounded-2xl">OK (0/3)</button>
+                </div>
+                <button onclick="closeModal()" class="mt-4 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
         </div>
         <button id="addBtn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
@@ -96,6 +100,7 @@
         let items = [];
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
+        let selectedFlavors = [];
         
         let lastTapTime = 0;
         let tapTimer = null;
@@ -121,7 +126,6 @@
                 filtered.sort((a, b) => {
                     if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                     if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
-                    
                     if (currentSort === 'category') {
                         const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
                         const regOrder = { "Speyside": 1, "Highland": 2, "Lowland": 3, "Islay": 4, "Campbeltown": 5, "Islands": 6 };
@@ -135,17 +139,10 @@
                         }
                         return a.name.localeCompare(b.name, 'ja');
                     }
-                    
                     if (currentSort === 'flavor') {
-                        const valA = a.flavor || "";
-                        const valB = b.flavor || "";
-                        if (valA !== valB) return valA.localeCompare(valB, 'ja');
-                        return a.name.localeCompare(b.name, 'ja');
+                        return (a.flavor || "").localeCompare(b.flavor || "", 'ja');
                     }
-
-                    const valA = a[currentSort] || "";
-                    const valB = b[currentSort] || "";
-                    return valA.localeCompare(valB, 'ja');
+                    return (a[currentSort] || "").localeCompare(b[currentSort] || "", 'ja');
                 });
             }
 
@@ -153,7 +150,7 @@
                 const stock = w.remaining ?? 100;
                 const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
                 return `
-                <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'filter grayscale opacity-40' : ''}" data-id="${w.id}">
+                <div class="whisky-card color-${w.category || 'Others'}" data-id="${w.id}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
@@ -186,30 +183,21 @@
 
         window.handleBottleNameClick = (e, id, name) => {
             const currentTime = new Date().getTime();
-            const tapGap = currentTime - lastTapTime;
-            if (tapGap < 250 && tapGap > 0) {
+            if (currentTime - lastTapTime < 250) {
                 clearTimeout(tapTimer);
-                if(confirm(`「${name}」を削除しますか？`)) {
-                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-                }
-                lastTapTime = 0;
+                if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
             } else {
                 lastTapTime = currentTime;
                 tapTimer = setTimeout(() => {
                     const n = prompt("銘柄名を変更", name);
-                    if (n && n !== name) {
-                        updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
-                    }
-                    lastTapTime = 0;
+                    if (n && n !== name) updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
                 }, 250);
             }
         };
 
         window.setSort = (k) => { 
             currentSort = k; 
-            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById(`sort-${k}`);
-            if (activeBtn) activeBtn.classList.add('active');
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.toggle('active', btn.id === `sort-${k}`));
             render(); 
         };
 
@@ -234,11 +222,8 @@
 
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        const flavors = [
-            "Smoky", "Peaty", "Fruity", "Citrus", "Tropical", 
-            "Sherry", "Vanilla", "Honey", "Floral", "Spicy", 
-            "Woody", "Nutty", "Chocolate", "Salty", "Herbal", "None"
-        ];
+        const flavors = ["Smoky", "Peaty", "Fruity", "Citrus", "Tropical", "Sherry", "Vanilla", "Honey", "Floral", "Spicy", "Woody", "Nutty", "Chocolate", "Salty", "Herbal", "None"];
+        
         let tName = "", tCat = "", tReg = "", tAbv = 40, tFlv = "", eTargetId = null;
 
         document.getElementById('addBtn').onclick = () => {
@@ -254,9 +239,18 @@
 
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
+            const controls = document.getElementById('multiControls');
+            if (mode.includes('flv')) {
+                controls.classList.remove('hidden');
+                selectedFlavors = [];
+                updateFlvBtnUI();
+            } else {
+                controls.classList.add('hidden');
+            }
+            
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
                 const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
-                return `<button onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
+                return `<button id="opt-${o}" onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
             }).join('');
         };
 
@@ -273,38 +267,56 @@
                 tReg = val;
                 if (eTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg }); closeModal(); }
                 else openModal(flavors, 'flv');
-            } else if (mode === 'flv') {
-                tFlv = val === "None" ? "" : val;
+            } else if (mode.includes('flv')) {
+                if (val === "None") {
+                    selectedFlavors = [];
+                    finalizeMultiFlv();
+                    return;
+                }
+                const idx = selectedFlavors.indexOf(val);
+                if (idx > -1) selectedFlavors.splice(idx, 1);
+                else if (selectedFlavors.length < 3) selectedFlavors.push(val);
+                
+                // UI更新
+                document.querySelectorAll('.modal-btn').forEach(b => b.classList.remove('selected'));
+                selectedFlavors.forEach(f => document.getElementById(`opt-${f}`).classList.add('selected'));
+                updateFlvBtnUI();
+            }
+        };
+
+        const updateFlvBtnUI = () => {
+            document.getElementById('flvConfirmBtn').innerText = `OK (${selectedFlavors.length}/3)`;
+        };
+
+        window.finalizeMultiFlv = async () => {
+            tFlv = selectedFlavors.join(', ');
+            if (eTargetId) {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { flavor: tFlv });
+                closeModal();
+            } else {
                 closeModal();
                 const a = prompt(`"${tName}" の度数(%)を入力`, "40");
                 tAbv = (a === null || a === "") ? 40 : parseFloat(a);
                 finalize();
-            } else if (mode === 'flv-only') {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { flavor: val === "None" ? "" : val });
-                closeModal();
             }
         };
 
         const finalize = async () => {
-            if (!eTargetId) {
-                const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
-                await addDoc(collection(db, "users", targetUID, "whiskies"), { 
-                    name: tName, category: tCat, region: tReg, flavor: tFlv, abv: tAbv, remaining: 100, 
-                    isWish: (currentPage === 'wish'), sortOrder: minOrder - 10, memo: ""
-                }); 
-            }
+            const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
+            await addDoc(collection(db, "users", targetUID, "whiskies"), { 
+                name: tName, category: tCat, region: tReg, flavor: tFlv, abv: tAbv, remaining: 100, 
+                isWish: (currentPage === 'wish'), sortOrder: minOrder - 10, memo: ""
+            }); 
         };
 
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
 
         new Sortable(document.getElementById('whiskyList'), {
-            handle: '.drag-handle',
-            animation: 150,
+            handle: '.drag-handle', animation: 150,
             onEnd: async () => {
                 if (currentSort !== 'sortOrder') return;
-                const listEls = document.querySelectorAll('.whisky-card');
                 const batch = writeBatch(db);
-                listEls.forEach((el, idx) => {
+                document.querySelectorAll('.whisky-card').forEach((el, idx) => {
                     batch.update(doc(db, "users", targetUID, "whiskies", el.getAttribute('data-id')), { sortOrder: idx * 10 });
                 });
                 await batch.commit();
