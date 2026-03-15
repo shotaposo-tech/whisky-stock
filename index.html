@@ -234,7 +234,11 @@
 
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "Vanilla", "Honey", "Salty", "None"];
+        const flavors = [
+            "Smoky", "Peaty", "Fruity", "Citrus", "Tropical", 
+            "Sherry", "Vanilla", "Honey", "Floral", "Spicy", 
+            "Woody", "Nutty", "Chocolate", "Salty", "Herbal", "None"
+        ];
         let tName = "", tCat = "", tReg = "", tAbv = 40, tFlv = "", eTargetId = null;
 
         document.getElementById('addBtn').onclick = () => {
