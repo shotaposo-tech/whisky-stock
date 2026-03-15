@@ -21,7 +21,7 @@
         .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; }
+        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; pointer-events: auto; }
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
         .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
         .pos-flv { position: absolute; top: 18px; right: 74px; }
@@ -47,7 +47,6 @@
     <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
         <div class="text-amber-500 font-bold animate-pulse uppercase tracking-[0.3em]">Master Collection</div>
     </div>
-
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
         <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/40 sticky top-0 z-50">
             <div class="px-6 py-3 flex justify-center items-center">
@@ -66,9 +65,7 @@
                 <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
             </div>
         </header>
-
         <main id="whiskyList" class="flex-grow px-4 pb-40"></main>
-
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
@@ -76,7 +73,6 @@
                 <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
         </div>
-
         <button id="addBtn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
     </div>
 
@@ -101,10 +97,9 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        let pressStartTime = 0;
         let namePressTimer = null;
         let memoPressTimer = null;
-        let isActionTriggered = false;
+        let isLongPressed = false; // 鉄壁フラグ
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -178,30 +173,31 @@
             }).join('');
         };
 
-        // --- ボトル名操作 ---
+        // --- ボトル名エリア操作（銘柄名・サブメモ共通） ---
         window.nameDown = (e, id, name) => {
-            isActionTriggered = false;
-            pressStartTime = Date.now();
+            isLongPressed = false;
             namePressTimer = setTimeout(() => {
-                isActionTriggered = true;
+                isLongPressed = true; // 長押し成功フラグを立てる
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-            }, 800);
+            }, 700); // 0.7秒で削除発動
         };
         window.nameUp = (e, id, name) => {
             clearTimeout(namePressTimer);
-            const duration = Date.now() - pressStartTime;
-            // 触れていた時間が0.25秒未満かつ、長押しイベントが発火していない場合のみ修正へ
-            if (!isActionTriggered && duration < 250) {
-                const n = prompt("銘柄名を変更", name);
-                if (n && n !== name) {
-                    updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
-                }
+            // 長押しが発動した直後は、このUpイベントは何もしない
+            if (isLongPressed) {
+                isLongPressed = false;
+                return;
+            }
+            // パッと離した（長押し判定時間前）場合のみ名前変更
+            const n = prompt("銘柄名を変更", name);
+            if (n && n !== name) {
+                updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
             }
         };
 
-        // --- 残量部分操作（メモ） ---
+        // --- 残量部分操作（メモ長押し） ---
         window.memoDown = (e, id, name, currentMemo) => {
             memoPressTimer = setTimeout(() => {
                 const m = prompt(`「${name}」のメモを入力`, currentMemo);
