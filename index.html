@@ -28,9 +28,9 @@
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
 
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; }
-        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); }
-        .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; }
+        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
+        .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
         .pos-flv { position: absolute; top: 18px; right: 74px; }
         .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; pointer-events: none; z-index: 10; }
@@ -117,6 +117,7 @@
         let currentSort = 'sortOrder';
         let tapCount = 0;
         let tapTimer = null;
+        let longTapTimer = null;
 
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
@@ -185,7 +186,6 @@
 
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
-                // カテゴリー表示の修正：Scotch/Region 形式にする
                 const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
                 
                 return `
@@ -197,7 +197,11 @@
                     <div class="pos-flv" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
-                    <div class="pos-name" onclick="handleWhiskyTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
+                    <div class="pos-name" 
+                        onmousedown="startLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        onmouseup="endLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')"
+                        ontouchstart="startLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        ontouchend="endLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
@@ -216,23 +220,42 @@
             }).join('');
         };
 
-        window.handleWhiskyTap = (e, id, name, currentMemo) => {
+        // 操作判定：長押しで削除、1回で名前修正、3回でメモ
+        let isLongPress = false;
+
+        window.startLongPress = (e, id, name) => {
+            isLongPress = false;
+            longTapTimer = setTimeout(() => {
+                isLongPress = true;
+                if(confirm(`「${name}」を削除しますか？`)) {
+                    deleteDoc(doc(db, "users", targetUID, "whiskies", id));
+                }
+            }, 600); // 0.6秒で長押し判定
+        };
+
+        window.endLongPress = (e, id, name, currentMemo) => {
+            clearTimeout(longTapTimer);
+            if (isLongPress) {
+                tapCount = 0; // 長押しした場合はタップカウントをリセット
+                return;
+            }
+
             tapCount++;
             clearTimeout(tapTimer);
             tapTimer = setTimeout(() => {
-                if (tapCount === 2) {
-                    const n = prompt("銘柄名を変更（空欄にすると削除）", name);
-                    if (n === "") {
-                        if(confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
-                    } else if (n && n !== name) {
+                if (tapCount === 1) {
+                    // ワンタップ：名前修正
+                    const n = prompt("銘柄名を変更", name);
+                    if (n && n !== name) {
                         updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
                     }
                 } else if (tapCount >= 3) {
+                    // トリプルタップ：メモ編集
                     const m = prompt(`「${name}」のメモを入力`, currentMemo);
                     if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
                 }
                 tapCount = 0;
-            }, 350);
+            }, 300);
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
