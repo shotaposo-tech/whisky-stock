@@ -13,33 +13,53 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         #whiskyList { padding-top: 20px; min-height: 100vh; }
+        
+        /* カード基本構造 */
         .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
+        
+        /* カテゴリ別グラデーション */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
         .color-Irish { background: radial-gradient(circle at center, rgba(5, 150, 105, 0.3), #020617) !important; border-color: rgba(5, 150, 105, 0.8) !important; }
         .color-American { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.3), #020617) !important; border-color: rgba(245, 158, 11, 0.8) !important; }
         .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
+
+        /* 左上パーツ（カテゴリ・度数） */
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; }
-        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
-        .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
-        .pos-flv-container { position: absolute; top: 18px; right: 74px; display: flex; flex-direction: row-reverse; gap: 4px; }
         .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
+
+        /* 右上パーツ（フレイバーバッジ独立並び） */
+        .pos-flv-container { position: absolute; top: 18px; right: 74px; display: flex; flex-direction: row-reverse; gap: 4px; z-index: 20; }
         .flv-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
-        .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); pointer-events: none; }
-        .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 62%; padding: 0 0 0 20px; pointer-events: none; }
+
+        /* 中央（名前・メモ） */
+        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; }
+        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
+        .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+
+        /* 下部（スライダー & 残量数値） */
+        .slider-section { position: absolute; bottom: 12px; left: 0; width: calc(100% - 54px); display: flex; align-items: center; padding: 0 15px 0 20px; gap: 12px; }
+        .slider-wrap { flex-grow: 1; pointer-events: none; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; pointer-events: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .pos-stock-right { min-width: 45px; text-align: right; z-index: 20; }
+        .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        /* ドラッグハンドル */
         .drag-handle { width: 54px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.12); cursor: grab; z-index: 30; }
+
+        /* ナビゲーション */
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; transition: all 0.2s; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+
+        /* モーダル */
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
-        .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; word-break: break-all; }
+        .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
     </style>
 </head>
@@ -66,6 +86,7 @@
             </div>
         </header>
         <main id="whiskyList" class="flex-grow px-4 pb-40"></main>
+
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
@@ -76,7 +97,7 @@
                 <button onclick="closeModal()" class="mt-4 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
         </div>
-        <button id="addBtn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-30 active:scale-90 border-2 border-amber-200/40">＋</button>
+        <button id="addBtn" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl z-30 border-2 border-amber-200/40">＋</button>
     </div>
 
     <script type="module">
@@ -137,7 +158,6 @@
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
                 const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
-                
                 const flavorList = w.flavor ? w.flavor.split(', ') : [];
                 const flavorBadges = flavorList.length > 0 
                     ? flavorList.map(f => `<span class="flv-badge">${f}</span>`).join('')
@@ -156,17 +176,19 @@
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
-                    <div class="pos-stock-right" 
-                        onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                        onmouseup="memoUp(event)"
-                        ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                        ontouchend="memoUp(event)">
-                        <div class="stock-num">${stock}%</div>
-                    </div>
-                    <div class="slider-wrap">
-                        <input type="range" min="0" max="100" step="5" value="${stock}" 
-                            onchange="updateStock('${w.id}', this.value)" 
-                            oninput="this.closest('.whisky-card').querySelector('.stock-num').innerText=this.value+'%'">
+                    <div class="slider-section">
+                        <div class="slider-wrap">
+                            <input type="range" min="0" max="100" step="5" value="${stock}" 
+                                onchange="updateStock('${w.id}', this.value)" 
+                                oninput="this.closest('.whisky-card').querySelector('.stock-num').innerText=this.value+'%'">
+                        </div>
+                        <div class="pos-stock-right" 
+                            onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                            onmouseup="memoUp(event)"
+                            ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                            ontouchend="memoUp(event)">
+                            <div class="stock-num">${stock}%</div>
+                        </div>
                     </div>
                     <div class="drag-handle" style="display: ${currentSort === 'sortOrder' ? 'flex' : 'none'}">
                         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
