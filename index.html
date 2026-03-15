@@ -58,12 +58,11 @@
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-        /* 新規：ウィッシュリスト用開封ボタン */
-        .open-btn { position: absolute; bottom: 12px; right: 70px; background: #f59e0b; color: #000; font-size: 10px; font-weight: 900; padding: 8px 12px; border-radius: 12px; box-shadow: 0 4px 10px rgba(245,158,11,0.4); z-index: 35; }
+        /* 購入ボタンのデザイン調整 */
+        .bought-btn { position: absolute; bottom: 12px; right: 65px; left: 20px; background: linear-gradient(to right, #f59e0b, #d97706); color: #000; font-size: 11px; font-weight: 900; padding: 10px; border-radius: 14px; box-shadow: 0 4px 15px rgba(245,158,11,0.3); z-index: 35; text-transform: uppercase; letter-spacing: 0.1em; }
         
-        /* 検索窓のアニメーション */
-        #search-input { transition: all 0.3s ease; width: 0; opacity: 0; padding: 0; }
-        #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; }
+        #search-input { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0; opacity: 0; padding: 0; transform: translateX(10px); }
+        #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; transform: translateX(0); }
     </style>
 </head>
 <body>
@@ -75,7 +74,7 @@
             <div class="px-6 py-3 flex justify-between items-center">
                 <h1 class="text-lg italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
                 <div class="flex items-center">
-                    <input type="text" id="search-input" placeholder="Search..." class="bg-slate-800 border border-amber-900/50 rounded-full text-xs text-white outline-none focus:border-amber-500">
+                    <input type="text" id="search-input" placeholder="銘柄・メモ検索" class="bg-slate-800 border border-amber-900/50 rounded-full text-xs text-white outline-none focus:border-amber-500">
                     <button onclick="toggleSearch()" class="text-amber-500 p-2">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
@@ -142,12 +141,12 @@
             render();
         });
 
-        // 検索窓の制御
         window.toggleSearch = () => {
             const input = document.getElementById('search-input');
             input.classList.toggle('active');
-            if (input.classList.contains('active')) input.focus();
-            else {
+            if (input.classList.contains('active')) {
+                input.focus();
+            } else {
                 input.value = "";
                 searchQuery = "";
                 render();
@@ -163,7 +162,12 @@
             const list = document.getElementById('whiskyList');
             let filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
-                const matchesSearch = w.name.toLowerCase().includes(searchQuery) || (w.memo && w.memo.toLowerCase().includes(searchQuery));
+                
+                // 大文字小文字を区別しない検索
+                const targetName = w.name ? w.name.toLowerCase() : "";
+                const targetMemo = w.memo ? w.memo.toLowerCase() : "";
+                const matchesSearch = targetName.includes(searchQuery) || targetMemo.includes(searchQuery);
+                
                 if (!matchesSearch) return false;
 
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
@@ -208,7 +212,7 @@
                     </div>
                     
                     ${w.isWish ? `
-                        <button onclick="openBottle('${w.id}')" class="open-btn">🏠 BOTTLE OPEN</button>
+                        <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="bought-btn">BOUGHT (Move to Shelf)</button>
                     ` : `
                         <div class="slider-section">
                             <div class="slider-wrap">
@@ -233,13 +237,12 @@
             }).join('');
         };
 
-        // ウィッシュリストからの開封処理
-        window.openBottle = async (id) => {
-            if(confirm("このボトルを開封してSHELFに移動しますか？")) {
+        window.buyBottle = async (id, name) => {
+            if(confirm(`「${name}」を購入しましたか？ SHELFに移動します。`)) {
                 const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
                 await updateDoc(doc(db, "users", targetUID, "whiskies", id), { 
                     isWish: false,
-                    sortOrder: minOrder - 10 // 一番上に持ってくる
+                    sortOrder: minOrder - 10 
                 });
                 switchPage('shelf');
             }
