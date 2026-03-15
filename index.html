@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <link rel="apple-touch-icon" href="apple-touch-icon%202.jpg">
+    <link rel="apple-touch-icon" href="apple-touch-icon.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Whisky Stock Pro</title>
@@ -24,10 +24,9 @@
         .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; }
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
         .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
-        .pos-flv { position: absolute; top: 18px; right: 74px; }
-        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; z-index: 20; user-select: none; -webkit-user-select: none; }
+        .pos-flv-container { position: absolute; top: 18px; right: 74px; display: flex; flex-direction: row-reverse; gap: 4px; }
         .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
-        .flv-badge { font-size: 10px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
+        .flv-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
         .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); pointer-events: none; }
         .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 62%; padding: 0 0 0 20px; pointer-events: none; }
@@ -41,7 +40,7 @@
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
         .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; word-break: break-all; }
-        .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.2); }
+        .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -72,7 +71,7 @@
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
                 <div id="modalOptions" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto"></div>
                 <div id="multiControls" class="mt-6 flex flex-col gap-3 hidden">
-                    <button onclick="finalizeMultiFlv()" id="flvConfirmBtn" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl active:scale-95 transition-transform">OK (0/3)</button>
+                    <button onclick="finalizeMultiFlv()" id="flvConfirmBtn" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl">OK (0/3)</button>
                 </div>
                 <button onclick="closeModal()" class="mt-4 w-full text-slate-400 font-bold py-2">CANCEL</button>
             </div>
@@ -101,7 +100,6 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         let selectedFlavors = [];
-        
         let lastTapTime = 0;
         let tapTimer = null;
         let memoTimer = null;
@@ -128,16 +126,9 @@
                     if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
                     if (currentSort === 'category') {
                         const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
-                        const regOrder = { "Speyside": 1, "Highland": 2, "Lowland": 3, "Islay": 4, "Campbeltown": 5, "Islands": 6 };
                         const orderA = catOrder[a.category] || 99;
                         const orderB = catOrder[b.category] || 99;
-                        if (orderA !== orderB) return orderA - orderB;
-                        if (a.category === 'Scotch' && b.category === 'Scotch') {
-                            const rA = regOrder[a.region] || 99;
-                            const rB = regOrder[b.region] || 99;
-                            if (rA !== rB) return rA - rB;
-                        }
-                        return a.name.localeCompare(b.name, 'ja');
+                        return orderA !== orderB ? orderA - orderB : a.name.localeCompare(b.name, 'ja');
                     }
                     return (a[currentSort] || "").localeCompare(b[currentSort] || "", 'ja');
                 });
@@ -146,14 +137,20 @@
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
                 const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
+                
+                const flavorList = w.flavor ? w.flavor.split(', ') : [];
+                const flavorBadges = flavorList.length > 0 
+                    ? flavorList.map(f => `<span class="flv-badge">${f}</span>`).join('')
+                    : `<span class="flv-badge flv-empty">Flavor</span>`;
+
                 return `
                 <div class="whisky-card color-${w.category || 'Others'}" data-id="${w.id}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
-                    <div class="pos-flv" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
-                        <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
+                    <div class="pos-flv-container" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                        ${flavorBadges}
                     </div>
                     <div class="pos-name" onclick="handleBottleNameClick(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
@@ -237,7 +234,6 @@
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             const controls = document.getElementById('multiControls');
-            
             if (mode.includes('flv')) {
                 controls.classList.remove('hidden');
                 selectedFlavors = []; 
@@ -245,7 +241,6 @@
             } else {
                 controls.classList.add('hidden');
             }
-            
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
                 const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
                 return `<button id="opt-${o}" onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
@@ -266,20 +261,15 @@
                 if (eTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg }); closeModal(); }
                 else openModal(flavors, 'flv');
             } else if (mode.includes('flv')) {
-                // フレイバー選択モード
                 if (val === "None") {
                     selectedFlavors = [];
-                    finalizeMultiFlv(); // Noneは即決
+                    finalizeMultiFlv();
                     return;
                 }
                 const idx = selectedFlavors.indexOf(val);
-                if (idx > -1) {
-                    selectedFlavors.splice(idx, 1);
-                } else if (selectedFlavors.length < 3) {
-                    selectedFlavors.push(val);
-                }
+                if (idx > -1) selectedFlavors.splice(idx, 1);
+                else if (selectedFlavors.length < 3) selectedFlavors.push(val);
                 
-                // ボタンの見た目を更新
                 document.querySelectorAll('.modal-btn').forEach(btn => {
                     const bVal = btn.id.replace('opt-', '');
                     btn.classList.toggle('selected', selectedFlavors.includes(bVal));
