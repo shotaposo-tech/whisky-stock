@@ -99,7 +99,7 @@
         
         let nameTimer = null;
         let memoTimer = null;
-        let longPressed = false; // フラグ名を短く管理
+        let longPressed = false;
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -173,23 +173,23 @@
             }).join('');
         };
 
-        // --- ボトル名操作（ここを大幅強化） ---
+        // --- ボトル名操作（提案いただいた鉄壁ロジック） ---
         window.nameDown = (e, id, name) => {
             longPressed = false;
             nameTimer = setTimeout(() => {
-                longPressed = true; // タイマー完遂＝長押し確定
+                longPressed = true;
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-            }, 800); // 0.8秒
+                clearTimeout(nameTimer); // 提案通り追加
+            }, 800);
         };
         window.nameUp = (e, id, name) => {
             clearTimeout(nameTimer);
             if (longPressed) {
-                // 長押しが一度でも成立していれば、その後のUpイベントは完全に無視
+                longPressed = false; // フラグをリセットして終了
                 return;
             }
-            // 長押しになる前に指を離した場合のみ「銘柄名変更」を実行
             const n = prompt("銘柄名を変更", name);
             if (n && n !== name) {
                 updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
