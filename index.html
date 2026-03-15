@@ -21,11 +21,11 @@
         .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; pointer-events: auto; }
+        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; }
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
         .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
         .pos-flv { position: absolute; top: 18px; right: 74px; }
-        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; z-index: 20; user-select: none; -webkit-user-select: none; cursor: help; }
+        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; z-index: 20; user-select: none; -webkit-user-select: none; }
         .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
@@ -97,9 +97,9 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        let namePressTimer = null;
-        let memoPressTimer = null;
-        let isLongPressed = false; // 鉄壁フラグ
+        let nameTimer = null;
+        let memoTimer = null;
+        let longPressed = false; // フラグ名を短く管理
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -173,38 +173,37 @@
             }).join('');
         };
 
-        // --- ボトル名エリア操作（銘柄名・サブメモ共通） ---
+        // --- ボトル名操作（ここを大幅強化） ---
         window.nameDown = (e, id, name) => {
-            isLongPressed = false;
-            namePressTimer = setTimeout(() => {
-                isLongPressed = true; // 長押し成功フラグを立てる
+            longPressed = false;
+            nameTimer = setTimeout(() => {
+                longPressed = true; // タイマー完遂＝長押し確定
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-            }, 700); // 0.7秒で削除発動
+            }, 800); // 0.8秒
         };
         window.nameUp = (e, id, name) => {
-            clearTimeout(namePressTimer);
-            // 長押しが発動した直後は、このUpイベントは何もしない
-            if (isLongPressed) {
-                isLongPressed = false;
+            clearTimeout(nameTimer);
+            if (longPressed) {
+                // 長押しが一度でも成立していれば、その後のUpイベントは完全に無視
                 return;
             }
-            // パッと離した（長押し判定時間前）場合のみ名前変更
+            // 長押しになる前に指を離した場合のみ「銘柄名変更」を実行
             const n = prompt("銘柄名を変更", name);
             if (n && n !== name) {
                 updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
             }
         };
 
-        // --- 残量部分操作（メモ長押し） ---
+        // --- 残量部分操作 ---
         window.memoDown = (e, id, name, currentMemo) => {
-            memoPressTimer = setTimeout(() => {
+            memoTimer = setTimeout(() => {
                 const m = prompt(`「${name}」のメモを入力`, currentMemo);
                 if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
             }, 600);
         };
-        window.memoUp = () => clearTimeout(memoPressTimer);
+        window.memoUp = () => clearTimeout(memoTimer);
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
         window.editAbv = async (id, name, old) => { 
