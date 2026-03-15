@@ -58,8 +58,8 @@
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-        /* 購入ボタンのデザイン調整 */
-        .bought-btn { position: absolute; bottom: 12px; right: 65px; left: 20px; background: linear-gradient(to right, #f59e0b, #d97706); color: #000; font-size: 11px; font-weight: 900; padding: 10px; border-radius: 14px; box-shadow: 0 4px 15px rgba(245,158,11,0.3); z-index: 35; text-transform: uppercase; letter-spacing: 0.1em; }
+        /* 購入ボタン：赤色に変更 */
+        .bought-btn { position: absolute; bottom: 12px; right: 65px; left: 20px; background: linear-gradient(to right, #dc2626, #991b1b); color: #fff; font-size: 13px; font-weight: 900; padding: 10px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220,38,38,0.3); z-index: 35; text-transform: uppercase; letter-spacing: 0.2em; }
         
         #search-input { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0; opacity: 0; padding: 0; transform: translateX(10px); }
         #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; transform: translateX(0); }
@@ -160,16 +160,19 @@
 
         const render = () => {
             const list = document.getElementById('whiskyList');
+            
+            // ARCHIVEページなら残量ソートを非表示にする
+            const stockSortBtn = document.getElementById('sort-remaining');
+            if (currentPage === 'archive') stockSortBtn.classList.add('hidden');
+            else stockSortBtn.classList.remove('hidden');
+
             let filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
-                
-                // 大文字小文字を区別しない検索
                 const targetName = w.name ? w.name.toLowerCase() : "";
                 const targetMemo = w.memo ? w.memo.toLowerCase() : "";
                 const matchesSearch = targetName.includes(searchQuery) || targetMemo.includes(searchQuery);
                 
                 if (!matchesSearch) return false;
-
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
@@ -212,7 +215,7 @@
                     </div>
                     
                     ${w.isWish ? `
-                        <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="bought-btn">BOUGHT (Move to Shelf)</button>
+                        <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="bought-btn">BOUGHT</button>
                     ` : `
                         <div class="slider-section">
                             <div class="slider-wrap">
@@ -238,7 +241,7 @@
         };
 
         window.buyBottle = async (id, name) => {
-            if(confirm(`「${name}」を購入しましたか？ SHELFに移動します。`)) {
+            if(confirm(`「${name}」を購入しました。SHELFに移動します。`)) {
                 const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
                 await updateDoc(doc(db, "users", targetUID, "whiskies", id), { 
                     isWish: false,
