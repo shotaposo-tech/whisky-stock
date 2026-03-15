@@ -36,7 +36,7 @@
         .drag-handle { width: 54px; height: 100%; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.12); cursor: grab; z-index: 30; }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
-        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; }
+        .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #475569; color: #94a3b8; white-space: nowrap; transition: all 0.2s; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
@@ -97,7 +97,7 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        // タップ判定用
+        // 操作判定用
         let lastTapTime = 0;
         let tapTimer = null;
         let memoTimer = null;
@@ -170,20 +170,20 @@
             }).join('');
         };
 
-        // --- ボトル名クリック操作（シングル/ダブル切り分け） ---
+        // --- ボトル名操作（シングル:名前変更 / ダブル:削除） ---
         window.handleBottleNameClick = (e, id, name) => {
             const currentTime = new Date().getTime();
             const tapGap = currentTime - lastTapTime;
 
             if (tapGap < 250 && tapGap > 0) {
-                // 【ダブルタップ】削除処理
+                // 【ダブルタップ】削除確認
                 clearTimeout(tapTimer);
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
                 lastTapTime = 0;
             } else {
-                // 【シングルタップ候補】少し待って名前変更
+                // 【シングルタップ】一回目なら少し待つ
                 lastTapTime = currentTime;
                 tapTimer = setTimeout(() => {
                     const n = prompt("銘柄名を変更", name);
@@ -195,7 +195,16 @@
             }
         };
 
-        // --- 残量部分操作（メモ長押しは維持） ---
+        // --- ソートボタンの強調表示 ---
+        window.setSort = (k) => { 
+            currentSort = k; 
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`sort-${k}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            render(); 
+        };
+
+        // --- 残量メモ長押し ---
         window.memoDown = (e, id, name, currentMemo) => {
             memoTimer = setTimeout(() => {
                 const m = prompt(`「${name}」のメモを入力`, currentMemo);
@@ -209,16 +218,17 @@
             const n = prompt(`"${name}" の度数(%)`, old); 
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
         };
-        window.setSort = (k) => { currentSort = k; render(); };
         window.switchPage = (p) => { 
             currentPage = p; 
             ['shelf', 'wish', 'archive'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === p));
             render(); 
         };
+
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
         let tName = "", tCat = "", tReg = "", tAbv = 40, tFlv = "", eTargetId = null;
+
         document.getElementById('addBtn').onclick = () => {
             const n = prompt("銘柄名を入力");
             if (!n) return;
@@ -226,8 +236,10 @@
             document.getElementById('editTargetName').innerText = n;
             openModal(categories, 'cat');
         };
+
         window.openCatEdit = (id, name) => { eTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(categories, 'cat'); };
         window.openFlvEdit = (id, name) => { eTargetId = id; document.getElementById('editTargetName').innerText = name; openModal(flavors, 'flv-only'); };
+
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
@@ -235,6 +247,7 @@
                 return `<button onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
             }).join('');
         };
+
         window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
                 tCat = val;
@@ -259,6 +272,7 @@
                 closeModal();
             }
         };
+
         const finalize = async () => {
             if (!eTargetId) {
                 const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
@@ -268,7 +282,9 @@
                 }); 
             }
         };
+
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
+
         new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
             animation: 150,
