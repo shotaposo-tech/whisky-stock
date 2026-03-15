@@ -118,6 +118,7 @@
         let tapCount = 0;
         let tapTimer = null;
         let longTapTimer = null;
+        let isLongPressActive = false;
 
         const sortable = new Sortable(document.getElementById('whiskyList'), {
             handle: '.drag-handle',
@@ -198,10 +199,10 @@
                         <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
                     <div class="pos-name" 
-                        onmousedown="startLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        onmouseup="endLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')"
-                        ontouchstart="startLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        ontouchend="endLongPress(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
+                        onmousedown="handlePressStart(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        onmouseup="handlePressEnd(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')"
+                        ontouchstart="handlePressStart(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        ontouchend="handlePressEnd(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
@@ -220,28 +221,28 @@
             }).join('');
         };
 
-        // 操作判定：長押しで削除、1回で名前修正、3回でメモ
-        let isLongPress = false;
-
-        window.startLongPress = (e, id, name) => {
-            isLongPress = false;
+        // 操作ロジックの改善
+        window.handlePressStart = (e, id, name) => {
+            isLongPressActive = false;
             longTapTimer = setTimeout(() => {
-                isLongPress = true;
+                isLongPressActive = true;
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-            }, 600); // 0.6秒で長押し判定
+            }, 600); 
         };
 
-        window.endLongPress = (e, id, name, currentMemo) => {
+        window.handlePressEnd = (e, id, name, currentMemo) => {
             clearTimeout(longTapTimer);
-            if (isLongPress) {
-                tapCount = 0; // 長押しした場合はタップカウントをリセット
+            if (isLongPressActive) {
+                tapCount = 0;
                 return;
             }
 
+            // タップ回数をカウント
             tapCount++;
             clearTimeout(tapTimer);
+            
             tapTimer = setTimeout(() => {
                 if (tapCount === 1) {
                     // ワンタップ：名前修正
@@ -255,7 +256,7 @@
                     if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
                 }
                 tapCount = 0;
-            }, 300);
+            }, 250); // 判定時間を少し短縮してレスポンスを向上
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
