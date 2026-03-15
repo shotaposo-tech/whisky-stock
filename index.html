@@ -40,7 +40,7 @@
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
-        .modal-btn { padding: 1rem; border-radius: 1rem; font-weight: 800; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
+        .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -125,20 +125,14 @@
                     if (currentSort === 'category') {
                         const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
                         const regOrder = { "Speyside": 1, "Highland": 2, "Lowland": 3, "Islay": 4, "Campbeltown": 5, "Islands": 6 };
-
                         const orderA = catOrder[a.category] || 99;
                         const orderB = catOrder[b.category] || 99;
-                        
-                        // 1. まずカテゴリーで分ける
                         if (orderA !== orderB) return orderA - orderB;
-
-                        // 2. 両方がスコッチなら地域で分ける
                         if (a.category === 'Scotch' && b.category === 'Scotch') {
                             const rA = regOrder[a.region] || 99;
                             const rB = regOrder[b.region] || 99;
                             if (rA !== rB) return rA - rB;
                         }
-                        // 3. 最後は名前順
                         return a.name.localeCompare(b.name, 'ja');
                     }
                     
@@ -240,7 +234,7 @@
 
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
-        const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
+        const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "Vanilla", "Honey", "Salty", "None"];
         let tName = "", tCat = "", tReg = "", tAbv = 40, tFlv = "", eTargetId = null;
 
         document.getElementById('addBtn').onclick = () => {
