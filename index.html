@@ -14,7 +14,7 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         #whiskyList { padding-top: 20px; min-height: 100vh; }
         
-        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; }
+        .whisky-card { height: 180px; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7); position: relative; margin-bottom: 1.25rem; background: #020617; overflow: hidden; padding-right: 54px; transition: all 0.3s ease; }
         
         .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
@@ -22,6 +22,10 @@
         .color-American { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.3), #020617) !important; border-color: rgba(245, 158, 11, 0.8) !important; }
         .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
+
+        /* アーカイブのゴースト表示：色を維持しつつ透明度と彩度を落とす */
+        .whisky-card.is-archived { opacity: 0.25; filter: saturate(0.4); }
+        .whisky-card.is-archived input[type=range] { pointer-events: none; }
 
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
         .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
@@ -51,18 +55,13 @@
 
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
-        .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        
+        /* モーダル内ボタンのタイト化 */
+        .modal-btn { padding: 0.6rem 0.2rem; border-radius: 0.75rem; font-weight: 800; font-size: 0.75rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
         
-        /* 1. CSS修正：ゴースト表示の実装 */
-        .whisky-card.is-archived {
-            opacity: 0.4;
-            filter: grayscale(80%);
-        }
-        .whisky-card.is-archived input[type=range] {
-            pointer-events: none;
-        }
-
+        /* 3列レイアウト用の追加CSS */
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     </style>
 </head>
 <body>
@@ -92,7 +91,7 @@
         <div id="modal" class="fixed inset-0 bg-black/95 items-center justify-center p-6 backdrop-blur-md">
             <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
                 <span id="editTargetName" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
-                <div id="modalOptions" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto"></div>
+                <div id="modalOptions" class="grid grid-cols-2 gap-2 max-h-[70vh] overflow-y-auto"></div>
                 <div id="multiControls" class="mt-6 flex flex-col gap-3 hidden">
                     <button onclick="finalizeMultiFlv()" id="flvConfirmBtn" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl">OK (0/3)</button>
                 </div>
@@ -149,9 +148,7 @@
                     if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
                     if (currentSort === 'category') {
                         const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
-                        const orderA = catOrder[a.category] || 99;
-                        const orderB = catOrder[b.category] || 99;
-                        return orderA !== orderB ? orderA - orderB : a.name.localeCompare(b.name, 'ja');
+                        return (catOrder[a.category] || 99) - (catOrder[b.category] || 99);
                     }
                     return (a[currentSort] || "").localeCompare(b[currentSort] || "", 'ja');
                 });
@@ -164,12 +161,11 @@
                 const flavorBadges = flavorList.length > 0 
                     ? flavorList.map(f => `<span class="flv-badge">${f}</span>`).join('')
                     : `<span class="flv-badge flv-empty">Flavor</span>`;
-
-                // 2. JavaScript修正：アーカイブかどうか判定してクラスを追加
-                const isArchivedClass = (currentPage === 'archive') ? 'is-archived' : '';
+                
+                const archiveClass = (currentPage === 'archive') ? 'is-archived' : '';
 
                 return `
-                <div class="whisky-card color-${w.category || 'Others'} ${isArchivedClass}" data-id="${w.id}">
+                <div class="whisky-card color-${w.category || 'Others'} ${archiveClass}" data-id="${w.id}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
@@ -263,26 +259,20 @@
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             const controls = document.getElementById('multiControls');
-            
-            // 3. JavaScript修正：高さを調整するためのコンテナへの参照
-            const optionsContainer = document.getElementById('modalOptions');
+            const optGrid = document.getElementById('modalOptions');
 
             if (mode.includes('flv')) {
                 controls.classList.remove('hidden');
                 selectedFlavors = []; 
                 updateFlvBtnUI();
-                
-                // 3. JavaScript修正：フレーバー選択時のみ高さを制限してスクロールさせる
-                optionsContainer.style.maxHeight = '50vh'; 
+                optGrid.classList.replace('grid-cols-2', 'grid-cols-3');
             } else {
                 controls.classList.add('hidden');
-                
-                // 3. JavaScript修正：カテゴリー選択時などは制限を解除
-                optionsContainer.style.maxHeight = 'none';
+                optGrid.classList.replace('grid-cols-3', 'grid-cols-2');
             }
             
-            document.getElementById('modalOptions').innerHTML = opts.map(o => {
-                const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
+            optGrid.innerHTML = opts.map(o => {
+                const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800/60';
                 return `<button id="opt-${o}" onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
             }).join('');
         };
