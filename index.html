@@ -34,7 +34,6 @@
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
         .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
-        /* スライダーセクションの修正 */
         .slider-section { position: absolute; bottom: 12px; left: 20px; right: 65px; display: flex; align-items: center; gap: 15px; z-index: 25; }
         .slider-wrap { flex: 1; height: 30px; display: flex; align-items: center; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; outline: none; }
@@ -54,6 +53,16 @@
         #modal.active { display: flex; }
         .modal-btn { padding: 0.8rem 0.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
+        
+        /* 1. CSS修正：ゴースト表示の実装 */
+        .whisky-card.is-archived {
+            opacity: 0.4;
+            filter: grayscale(80%);
+        }
+        .whisky-card.is-archived input[type=range] {
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body>
@@ -156,8 +165,11 @@
                     ? flavorList.map(f => `<span class="flv-badge">${f}</span>`).join('')
                     : `<span class="flv-badge flv-empty">Flavor</span>`;
 
+                // 2. JavaScript修正：アーカイブかどうか判定してクラスを追加
+                const isArchivedClass = (currentPage === 'archive') ? 'is-archived' : '';
+
                 return `
-                <div class="whisky-card color-${w.category || 'Others'}" data-id="${w.id}">
+                <div class="whisky-card color-${w.category || 'Others'} ${isArchivedClass}" data-id="${w.id}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${catDisp}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
@@ -251,13 +263,24 @@
         const openModal = (opts, mode) => {
             document.getElementById('modal').classList.add('active');
             const controls = document.getElementById('multiControls');
+            
+            // 3. JavaScript修正：高さを調整するためのコンテナへの参照
+            const optionsContainer = document.getElementById('modalOptions');
+
             if (mode.includes('flv')) {
                 controls.classList.remove('hidden');
                 selectedFlavors = []; 
                 updateFlvBtnUI();
+                
+                // 3. JavaScript修正：フレーバー選択時のみ高さを制限してスクロールさせる
+                optionsContainer.style.maxHeight = '50vh'; 
             } else {
                 controls.classList.add('hidden');
+                
+                // 3. JavaScript修正：カテゴリー選択時などは制限を解除
+                optionsContainer.style.maxHeight = 'none';
             }
+            
             document.getElementById('modalOptions').innerHTML = opts.map(o => {
                 const colorClass = mode === 'cat' ? `color-${o}` : 'bg-slate-800';
                 return `<button id="opt-${o}" onclick="handleModalSelect('${o}', '${mode}')" class="modal-btn ${colorClass}">${o}</button>`;
