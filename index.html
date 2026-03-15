@@ -28,18 +28,18 @@
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
 
         .pos-left-specs { position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; z-index: 20; }
-        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; }
+        .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; -webkit-user-select: none; cursor: pointer; }
         .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
         .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
         .pos-flv { position: absolute; top: 18px; right: 74px; }
-        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; pointer-events: none; z-index: 10; }
+        .pos-stock-right { position: absolute; bottom: 13px; right: 70px; text-align: right; z-index: 20; user-select: none; -webkit-user-select: none; cursor: help; }
 
         .tag-pill { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 2px 10px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
         
-        .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .stock-num { font-family: ui-monospace, monospace; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); pointer-events: none; }
 
         .slider-wrap { position: absolute; bottom: 12px; left: 0; width: 62%; padding: 0 0 0 20px; pointer-events: none; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; width: 100%; pointer-events: none; }
@@ -116,26 +116,10 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        let tapCount = 0;
-        let tapTimer = null;
-        let longTapTimer = null;
+        // 判定用変数
+        let namePressTimer = null;
+        let memoPressTimer = null;
         let isLongPress = false;
-
-        const sortable = new Sortable(document.getElementById('whiskyList'), {
-            handle: '.drag-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: async () => {
-                if (currentSort !== 'sortOrder') return;
-                const listEls = document.querySelectorAll('.whisky-card');
-                const batch = writeBatch(db);
-                listEls.forEach((el, idx) => {
-                    const id = el.getAttribute('data-id');
-                    batch.update(doc(db, "users", targetUID, "whiskies", id), { sortOrder: idx * 10 });
-                });
-                await batch.commit();
-            }
-        });
 
         onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("sortOrder", "asc")), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -143,18 +127,6 @@
             items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             render();
         });
-
-        window.setSort = (k) => { currentSort = k; render(); };
-        window.switchPage = (p) => { 
-            currentPage = p; 
-            const stockBtn = document.getElementById('sort-remaining');
-            if (stockBtn) stockBtn.style.display = (p === 'archive') ? 'none' : 'block';
-            ['shelf', 'wish', 'archive'].forEach(t => { 
-                const el = document.getElementById(`tab-${t}`);
-                if(el) el.classList.toggle('active', t === p); 
-            });
-            render(); 
-        };
 
         const render = () => {
             const list = document.getElementById('whiskyList');
@@ -182,10 +154,6 @@
                 });
             }
 
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            const currentSortBtn = document.getElementById(`sort-${currentSort}`);
-            if (currentSortBtn) currentSortBtn.classList.add('active');
-
             list.innerHTML = filtered.map((w) => {
                 const stock = w.remaining ?? 100;
                 const catDisp = (w.category === 'Scotch' && w.region) ? `Scotch/${w.region}` : (w.category || 'Category');
@@ -200,14 +168,18 @@
                         <span class="flv-badge ${!w.flavor ? 'flv-empty' : ''}">${w.flavor || 'Flavor'}</span>
                     </div>
                     <div class="pos-name" 
-                        onmousedown="handleNameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        onmouseup="handleNameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')"
-                        ontouchstart="handleNameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
-                        ontouchend="handleNameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')">
+                        onmousedown="nameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        onmouseup="nameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')"
+                        ontouchstart="nameDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                        ontouchend="nameUp(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name">${w.name}</h3>
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
-                    <div class="pos-stock-right">
+                    <div class="pos-stock-right" 
+                        onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                        onmouseup="memoUp(event)"
+                        ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                        ontouchend="memoUp(event)">
                         <div class="stock-num">${stock}%</div>
                     </div>
                     <div class="slider-wrap">
@@ -222,43 +194,36 @@
             }).join('');
         };
 
-        // 操作判定のコアロジック
-        window.handleNameDown = (e, id, name) => {
+        // --- ボトル名操作（シングルタップ修正 / 長押し削除） ---
+        window.nameDown = (e, id, name) => {
             isLongPress = false;
-            // 長押しの時間を0.8秒に延長
-            longTapTimer = setTimeout(() => {
+            namePressTimer = setTimeout(() => {
                 isLongPress = true;
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
-            }, 800); 
+            }, 800); // 0.8秒長押し
+        };
+        window.nameUp = (e, id, name) => {
+            clearTimeout(namePressTimer);
+            if (!isLongPress) {
+                // シングルタップ：名前修正
+                const n = prompt("銘柄名を変更", name);
+                if (n && n !== name) {
+                    updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                }
+            }
         };
 
-        window.handleNameUp = (e, id, name, currentMemo) => {
-            clearTimeout(longTapTimer);
-            if (isLongPress) {
-                tapCount = 0; // 長押しが成立した場合はタップをカウントしない
-                return;
-            }
-
-            tapCount++;
-            clearTimeout(tapTimer);
-            
-            tapTimer = setTimeout(() => {
-                if (tapCount === 1) {
-                    // シングルタップ：名前修正
-                    const n = prompt("銘柄名を変更", name);
-                    if (n && n !== name) {
-                        updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
-                    }
-                } else if (tapCount === 3) {
-                    // トリプルタップ：メモ編集
-                    const m = prompt(`「${name}」のメモを入力`, currentMemo);
-                    if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
-                }
-                // tapCount === 2 (ダブルタップ) は何もせず無視
-                tapCount = 0;
-            }, 280); // タップ間隔の許容時間
+        // --- パーセンテージ部分操作（長押しメモ） ---
+        window.memoDown = (e, id, name, currentMemo) => {
+            memoPressTimer = setTimeout(() => {
+                const m = prompt(`「${name}」のメモを入力`, currentMemo);
+                if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m });
+            }, 600); // 0.6秒長押し
+        };
+        window.memoUp = () => {
+            clearTimeout(memoPressTimer);
         };
 
         window.updateStock = async (id, val) => { await updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) }); };
@@ -267,6 +232,13 @@
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
         };
         
+        window.setSort = (k) => { currentSort = k; render(); };
+        window.switchPage = (p) => { 
+            currentPage = p; 
+            ['shelf', 'wish', 'archive'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === p));
+            render(); 
+        };
+
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotchRegions = ["Speyside", "Highland", "Lowland", "Islay", "Campbeltown", "Islands"];
         const flavors = ["Smoky", "Peaty", "Fruity", "Floral", "Sweet", "Sherry", "Spicy", "Woody", "Nutty", "None"];
@@ -295,25 +267,16 @@
         window.handleModalSelect = async (val, mode) => {
             if (mode === 'cat') {
                 tCat = val;
-                if (val === "Scotch") {
-                    openModal(scotchRegions, 'reg');
-                } else {
+                if (val === "Scotch") openModal(scotchRegions, 'reg');
+                else {
                     tReg = "";
-                    if (eTargetId) {
-                        await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: "" });
-                        closeModal();
-                    } else {
-                        openModal(flavors, 'flv');
-                    }
+                    if (eTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: "" }); closeModal(); }
+                    else openModal(flavors, 'flv');
                 }
             } else if (mode === 'reg') {
                 tReg = val;
-                if (eTargetId) {
-                    await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg });
-                    closeModal();
-                } else {
-                    openModal(flavors, 'flv');
-                }
+                if (eTargetId) { await updateDoc(doc(db, "users", targetUID, "whiskies", eTargetId), { category: tCat, region: tReg }); closeModal(); }
+                else openModal(flavors, 'flv');
             } else if (mode === 'flv') {
                 tFlv = val === "None" ? "" : val;
                 closeModal();
@@ -336,6 +299,21 @@
             }
         };
         window.closeModal = () => document.getElementById('modal').classList.remove('active');
+
+        // ドラッグ並び替えの初期化
+        new Sortable(document.getElementById('whiskyList'), {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: async () => {
+                if (currentSort !== 'sortOrder') return;
+                const listEls = document.querySelectorAll('.whisky-card');
+                const batch = writeBatch(db);
+                listEls.forEach((el, idx) => {
+                    batch.update(doc(db, "users", targetUID, "whiskies", el.getAttribute('data-id')), { sortOrder: idx * 10 });
+                });
+                await batch.commit();
+            }
+        });
     </script>
 </body>
 </html>
