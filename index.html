@@ -129,14 +129,16 @@
                         const orderA = catOrder[a.category] || 99;
                         const orderB = catOrder[b.category] || 99;
                         
+                        // 1. まずカテゴリーで分ける
                         if (orderA !== orderB) return orderA - orderB;
 
-                        // スコッチ内での地域ソート
+                        // 2. 両方がスコッチなら地域で分ける
                         if (a.category === 'Scotch' && b.category === 'Scotch') {
                             const rA = regOrder[a.region] || 99;
                             const rB = regOrder[b.region] || 99;
                             if (rA !== rB) return rA - rB;
                         }
+                        // 3. 最後は名前順
                         return a.name.localeCompare(b.name, 'ja');
                     }
                     
