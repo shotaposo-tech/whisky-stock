@@ -97,7 +97,6 @@
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
         
-        // 操作判定用
         let lastTapTime = 0;
         let tapTimer = null;
         let memoTimer = null;
@@ -122,13 +121,32 @@
                 filtered.sort((a, b) => {
                     if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                     if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
+                    
                     if (currentSort === 'category') {
-                        const order = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
-                        const orderA = order[a.category] || 99;
-                        const orderB = order[b.category] || 99;
+                        const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
+                        const regOrder = { "Speyside": 1, "Highland": 2, "Lowland": 3, "Islay": 4, "Campbeltown": 5, "Islands": 6 };
+
+                        const orderA = catOrder[a.category] || 99;
+                        const orderB = catOrder[b.category] || 99;
+                        
                         if (orderA !== orderB) return orderA - orderB;
+
+                        // スコッチ内での地域ソート
+                        if (a.category === 'Scotch' && b.category === 'Scotch') {
+                            const rA = regOrder[a.region] || 99;
+                            const rB = regOrder[b.region] || 99;
+                            if (rA !== rB) return rA - rB;
+                        }
                         return a.name.localeCompare(b.name, 'ja');
                     }
+                    
+                    if (currentSort === 'flavor') {
+                        const valA = a.flavor || "";
+                        const valB = b.flavor || "";
+                        if (valA !== valB) return valA.localeCompare(valB, 'ja');
+                        return a.name.localeCompare(b.name, 'ja');
+                    }
+
                     const valA = a[currentSort] || "";
                     const valB = b[currentSort] || "";
                     return valA.localeCompare(valB, 'ja');
@@ -170,20 +188,16 @@
             }).join('');
         };
 
-        // --- ボトル名操作（シングル:名前変更 / ダブル:削除） ---
         window.handleBottleNameClick = (e, id, name) => {
             const currentTime = new Date().getTime();
             const tapGap = currentTime - lastTapTime;
-
             if (tapGap < 250 && tapGap > 0) {
-                // 【ダブルタップ】削除確認
                 clearTimeout(tapTimer);
                 if(confirm(`「${name}」を削除しますか？`)) {
                     deleteDoc(doc(db, "users", targetUID, "whiskies", id));
                 }
                 lastTapTime = 0;
             } else {
-                // 【シングルタップ】一回目なら少し待つ
                 lastTapTime = currentTime;
                 tapTimer = setTimeout(() => {
                     const n = prompt("銘柄名を変更", name);
@@ -195,7 +209,6 @@
             }
         };
 
-        // --- ソートボタンの強調表示 ---
         window.setSort = (k) => { 
             currentSort = k; 
             document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
@@ -204,7 +217,6 @@
             render(); 
         };
 
-        // --- 残量メモ長押し ---
         window.memoDown = (e, id, name, currentMemo) => {
             memoTimer = setTimeout(() => {
                 const m = prompt(`「${name}」のメモを入力`, currentMemo);
