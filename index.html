@@ -23,7 +23,6 @@
         .color-Blended { background: radial-gradient(circle at center, rgba(148, 163, 184, 0.2), #020617) !important; border-color: rgba(148, 163, 184, 0.6) !important; }
         .color-Others { background: radial-gradient(circle at center, rgba(51, 65, 85, 0.3), #020617) !important; border-color: rgba(71, 85, 105, 0.8) !important; }
 
-        /* アーカイブのゴースト表示：色を維持しつつ透明度と彩度を落とす */
         .whisky-card.is-archived { opacity: 0.25; filter: saturate(0.4); }
         .whisky-card.is-archived input[type=range] { pointer-events: none; }
 
@@ -55,13 +54,16 @@
 
         #modal { display: none; z-index: 100; }
         #modal.active { display: flex; }
-        
-        /* モーダル内ボタンのタイト化 */
         .modal-btn { padding: 0.6rem 0.2rem; border-radius: 0.75rem; font-weight: 800; font-size: 0.75rem; text-align: center; border: 2px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
-        
-        /* 3列レイアウト用の追加CSS */
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+        /* 新規：ウィッシュリスト用開封ボタン */
+        .open-btn { position: absolute; bottom: 12px; right: 70px; background: #f59e0b; color: #000; font-size: 10px; font-weight: 900; padding: 8px 12px; border-radius: 12px; box-shadow: 0 4px 10px rgba(245,158,11,0.4); z-index: 35; }
+        
+        /* 検索窓のアニメーション */
+        #search-input { transition: all 0.3s ease; width: 0; opacity: 0; padding: 0; }
+        #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -70,8 +72,14 @@
     </div>
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative hidden">
         <header class="bg-black/95 backdrop-blur-xl border-b border-amber-900/40 sticky top-0 z-50">
-            <div class="px-6 py-3 flex justify-center items-center">
+            <div class="px-6 py-3 flex justify-between items-center">
                 <h1 class="text-lg italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
+                <div class="flex items-center">
+                    <input type="text" id="search-input" placeholder="Search..." class="bg-slate-800 border border-amber-900/50 rounded-full text-xs text-white outline-none focus:border-amber-500">
+                    <button onclick="toggleSearch()" class="text-amber-500 p-2">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </div>
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
@@ -121,6 +129,7 @@
         let items = [];
         let currentPage = 'shelf';
         let currentSort = 'sortOrder';
+        let searchQuery = "";
         let selectedFlavors = [];
         let lastTapTime = 0;
         let tapTimer = null;
@@ -133,10 +142,30 @@
             render();
         });
 
+        // 検索窓の制御
+        window.toggleSearch = () => {
+            const input = document.getElementById('search-input');
+            input.classList.toggle('active');
+            if (input.classList.contains('active')) input.focus();
+            else {
+                input.value = "";
+                searchQuery = "";
+                render();
+            }
+        };
+
+        document.getElementById('search-input').oninput = (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            render();
+        };
+
         const render = () => {
             const list = document.getElementById('whiskyList');
             let filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
+                const matchesSearch = w.name.toLowerCase().includes(searchQuery) || (w.memo && w.memo.toLowerCase().includes(searchQuery));
+                if (!matchesSearch) return false;
+
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
@@ -178,26 +207,42 @@
                         ${w.memo ? `<span class="sub-memo">${w.memo}</span>` : ''}
                     </div>
                     
-                    <div class="slider-section">
-                        <div class="slider-wrap">
-                            <input type="range" min="0" max="100" step="5" value="${stock}" 
-                                onchange="updateStock('${w.id}', this.value)" 
-                                oninput="this.closest('.whisky-card').querySelector('.stock-num').innerText=this.value+'%'">
+                    ${w.isWish ? `
+                        <button onclick="openBottle('${w.id}')" class="open-btn">🏠 BOTTLE OPEN</button>
+                    ` : `
+                        <div class="slider-section">
+                            <div class="slider-wrap">
+                                <input type="range" min="0" max="100" step="5" value="${stock}" 
+                                    onchange="updateStock('${w.id}', this.value)" 
+                                    oninput="this.closest('.whisky-card').querySelector('.stock-num').innerText=this.value+'%'">
+                            </div>
+                            <div class="stock-num-container" 
+                                 onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                                 onmouseup="memoUp(event)"
+                                 ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                                 ontouchend="memoUp(event)">
+                                <div class="stock-num">${stock}%</div>
+                            </div>
                         </div>
-                        <div class="stock-num-container" 
-                             onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                             onmouseup="memoUp(event)"
-                             ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                             ontouchend="memoUp(event)">
-                            <div class="stock-num">${stock}%</div>
-                        </div>
-                    </div>
+                    `}
 
                     <div class="drag-handle" style="display: ${currentSort === 'sortOrder' ? 'flex' : 'none'}">
                         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
                     </div>
                 </div>`;
             }).join('');
+        };
+
+        // ウィッシュリストからの開封処理
+        window.openBottle = async (id) => {
+            if(confirm("このボトルを開封してSHELFに移動しますか？")) {
+                const minOrder = items.length > 0 ? Math.min(...items.map(i => i.sortOrder ?? 0)) : 0;
+                await updateDoc(doc(db, "users", targetUID, "whiskies", id), { 
+                    isWish: false,
+                    sortOrder: minOrder - 10 // 一番上に持ってくる
+                });
+                switchPage('shelf');
+            }
         };
 
         window.handleBottleNameClick = (e, id, name) => {
