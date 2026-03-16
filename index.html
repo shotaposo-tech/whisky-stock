@@ -9,32 +9,25 @@
         body { -webkit-tap-highlight-color: transparent; background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
-        
         .is-archive { opacity: 0.55; }
-
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
         .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); }
         .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); }
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); }
-
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
-
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; pointer-events: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; }
-
         .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
         .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
-
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
         .sort-btn.active { background: #f59e0b; color: #000; }
-        
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 1px solid rgba(255,255,255,0.05); }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
@@ -104,17 +97,11 @@
             render();
         };
 
-        // メモ編集用の共通関数
-        window.editMemo = (id, name, currentMemo) => {
-            const newMemo = prompt(`【${name}】のメモを入力`, currentMemo || "");
-            if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
-        };
-
-        // 長押し検知用
         let longPressTimer;
         window.startPress = (id, name, memo) => {
             longPressTimer = setTimeout(() => {
-                window.editMemo(id, name, memo);
+                const newMemo = prompt(`【${name}】のメモ`, memo || "");
+                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
             }, 800);
         };
         window.cancelPress = () => clearTimeout(longPressTimer);
@@ -153,7 +140,7 @@
                 const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
                 const safeName = w.name.replace(/'/g, "\\'");
                 const safeMemo = (w.memo || "").replace(/'/g, "\\'");
-                
+
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
                     <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
@@ -165,7 +152,7 @@
                     </div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${safeName}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
-                        ${w.memo ? `<p class="text-[10px] text-amber-200/60 mt-1 font-medium italic text-center px-4 truncate max-w-full">${w.memo}</p>` : ''}
+                        ${w.memo ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic">Memo: ${w.memo}</p>` : ''}
                     </div>
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
@@ -176,13 +163,11 @@
                                 class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
                         </div>
                     ` : `
-                        <div class="slider-section" onclick="event.stopPropagation()">
+                        <div class="slider-section" onclick="event.stopPropagation()" 
+                             ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()"
+                             onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()">
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
-                            <div class="stock-num text-[1.2rem] font-black" 
-                                 ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()"
-                                 onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()">
-                                ${w.remaining ?? 100}%
-                            </div>
+                            <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
                         </div>
                     `}
                 </div>`}).join('');
@@ -226,17 +211,34 @@
 
         const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
         let tempName = "";
-        
         window.openCatEdit = (id, name) => {
             tempName = name;
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
             document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn"><span>${c}</span></button>`).join('');
         };
-
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
                 document.getElementById('modalOptions').innerHTML = regs.map(r => `
                     <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn"><span>${r}</span></button>
                 `).join('');
-            } else { save
+            } else { saveCat(wid, c, null); }
+        };
+        window.saveCat = async (wid, c, r) => {
+            if (wid !== "null") { await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r }); }
+            else {
+                const abv = prompt("度数", "40");
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
+            }
+            closeModal();
+        };
+        window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
+        window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
+        window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
+        window.closeModal = () => document.getElementById('modal').style.display = 'none';
+        document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
+        window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
+        window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
+    </script>
+</body>
+</html>
