@@ -30,7 +30,9 @@
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
         .sort-btn.active { background: #f59e0b; color: #000; }
+        
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-btn { background-color: rgba(30, 41, 59, 1); color: white; padding: 1rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: bold; width: 100%; }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
 </head>
@@ -58,11 +60,14 @@
             </div>
         </header>
         <main id="whiskyList" class="flex-grow px-4 pb-40 pt-4"></main>
+        
         <div id="modal">
-            <div class="bg-slate-900 w-full max-w-sm rounded-[32px] p-8 border border-white/20">
+            <div class="bg-slate-900 w-[90%] max-w-sm rounded-[32px] p-8 border border-white/20">
                 <span id="modalTitle" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
-                <div id="modalOptions" class="grid grid-cols-3 gap-2"></div>
-                <button onclick="closeModal()" class="mt-8 w-full text-slate-400 font-bold py-2 border-t border-white/10">CLOSE</button>
+                <div id="modalOptions" class="grid grid-cols-3 gap-3 justify-items-center"></div>
+                <div class="mt-8 border-t border-white/10 pt-4">
+                    <button onclick="closeModal()" class="w-full text-slate-400 font-bold py-2 tracking-widest">CLOSE</button>
+                </div>
             </div>
         </div>
         <button id="addBtn" class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30">＋</button>
@@ -89,16 +94,13 @@
         const render = () => {
             const list = document.getElementById('whiskyList');
             document.getElementById('sort-remaining').style.display = (currentPage === 'archive') ? 'none' : 'block';
-
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
                 if (!w.name?.toLowerCase().includes(searchQuery)) return false;
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
-            });
-
-            filtered.sort((a, b) => {
+            }).sort((a, b) => {
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                 if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
                 if (currentSort === 'category') return (a.category || "").localeCompare(b.category || "");
@@ -146,55 +148,51 @@
         const flvList = ["Peaty", "Smoky", "Sweet", "Fruity", "Floral", "Spicy", "Sherry", "Oak", "Honey", "Vanilla", "Waxy", "Citrus", "Salty", "Malty", "None"];
         window.openFlvEdit = (id, name, current) => {
             const m = document.getElementById('modal'); m.style.display = 'flex';
-            document.getElementById('modalTitle').innerText = `Flavor: ${name}`;
+            document.getElementById('modalTitle').innerText = name;
             let selected = (current && current !== "None") ? current.split(', ') : [];
             const refresh = () => {
                 document.getElementById('modalOptions').innerHTML = flvList.map(f => `
-                    <button onclick="toggleFlv('${id}', '${f}')" class="flv-opt-btn p-3 rounded-xl text-[10px] font-bold bg-slate-800 text-white ${ (f === "None" && selected.length === 0) || selected.includes(f) ? 'selected' : ''}">${f}</button>
+                    <button onclick="toggleFlv('${id}', '${f}')" class="modal-btn flv-opt-btn ${ (f === "None" && selected.length === 0) || selected.includes(f) ? 'selected' : ''}">${f}</button>
                 `).join('');
             };
             window.toggleFlv = async (wid, f) => {
-                if (f === "None") { selected = []; }
+                if (f === "None") selected = [];
                 else {
                     if (selected.includes(f)) selected = selected.filter(s => s !== f);
                     else if (selected.length < 3) selected.push(f);
                 }
-                const saveVal = selected.length > 0 ? selected.join(', ') : "None";
-                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { flavor: saveVal });
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { flavor: selected.length > 0 ? selected.join(', ') : "None" });
                 refresh();
             };
             refresh();
         };
 
+        const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
+        let tempName = "";
+        window.openCatEdit = (id, name) => {
+            tempName = name;
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn">${c}</button>`).join('');
+        };
+        window.selCat = (wid, c) => {
+            if (c === 'Scotch') {
+                document.getElementById('modalOptions').innerHTML = regs.map((r, i) => `
+                    <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn ${i === 5 ? 'col-start-2' : ''}">${r}</button>
+                `).join('');
+            } else { saveCat(wid, c, null); }
+        };
+        async function saveCat(wid, c, r) {
+            if (wid !== "null") { await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r }); }
+            else { const abv = prompt("度数", "40"); await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() }); }
+            closeModal();
+        }
+
         window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
         window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
         window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
         window.closeModal = () => document.getElementById('modal').style.display = 'none';
-
-        const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
-        let tempName = "";
-
         document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
-        window.openCatEdit = (id, name) => {
-            tempName = name;
-            const m = document.getElementById('modal'); m.style.display = 'flex';
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="bg-slate-800 p-4 rounded-xl text-xs font-bold text-white">${c}</button>`).join('');
-        };
-        window.selCat = (wid, c) => {
-            if (c === 'Scotch') {
-                document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="saveCat('${wid}', '${c}', '${r}')" class="bg-slate-800 p-4 rounded-xl text-xs font-bold text-white">${r}</button>`).join('');
-            } else { saveCat(wid, c, null); }
-        };
-        async function saveCat(wid, c, r) {
-            if (wid !== "null") {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
-            } else {
-                const abv = prompt("度数", "40");
-                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
-            }
-            closeModal();
-        }
         window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
         window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
     </script>
