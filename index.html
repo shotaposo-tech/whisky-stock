@@ -20,7 +20,6 @@
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
-        
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
 
@@ -105,12 +104,17 @@
             render();
         };
 
+        // メモ編集用の共通関数
+        window.editMemo = (id, name, currentMemo) => {
+            const newMemo = prompt(`【${name}】のメモを入力`, currentMemo || "");
+            if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
+        };
+
         // 長押し検知用
         let longPressTimer;
         window.startPress = (id, name, memo) => {
             longPressTimer = setTimeout(() => {
-                const newMemo = prompt(`【${name}】のメモを入力`, memo || "");
-                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
+                window.editMemo(id, name, memo);
             }, 800);
         };
         window.cancelPress = () => clearTimeout(longPressTimer);
@@ -147,33 +151,38 @@
 
             list.innerHTML = filtered.map(w => {
                 const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
+                const safeName = w.name.replace(/'/g, "\\'");
+                const safeMemo = (w.memo || "").replace(/'/g, "\\'");
+                
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
                     <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
-                        <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.category === 'Scotch' ? `Scotch / ${w.region || '???'}` : (w.category || 'Cat')}</div>
-                        <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
+                        <div class="tag-pill" onclick="openCatEdit('${w.id}', '${safeName}')">${w.category === 'Scotch' ? `Scotch / ${w.region || '???'}` : (w.category || 'Cat')}</div>
+                        <div class="tag-pill" onclick="editAbv('${w.id}', '${safeName}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
-                    <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.flavor || ''}')">
+                    <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${safeName}', '${w.flavor || ''}')">
                         ${flvArray.length > 0 ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('') : `<span class="flv-badge ghost">None</span>`}
                     </div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${safeName}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
-                        ${(w.isWish && w.memo) ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic">Memo: ${w.memo}</p>` : ''}
+                        ${w.memo ? `<p class="text-[10px] text-amber-200/60 mt-1 font-medium italic text-center px-4 truncate max-w-full">${w.memo}</p>` : ''}
                     </div>
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
                             <button 
-                                ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                                ontouchend="cancelPress()" 
-                                onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
-                                onmouseup="cancelPress()"
-                                onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                                ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()" 
+                                onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()"
+                                onclick="buyBottle('${w.id}', '${safeName}')" 
                                 class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
                         </div>
                     ` : `
                         <div class="slider-section" onclick="event.stopPropagation()">
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
-                            <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
+                            <div class="stock-num text-[1.2rem] font-black" 
+                                 ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()"
+                                 onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()">
+                                ${w.remaining ?? 100}%
+                            </div>
                         </div>
                     `}
                 </div>`}).join('');
@@ -230,26 +239,4 @@
                 document.getElementById('modalOptions').innerHTML = regs.map(r => `
                     <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn"><span>${r}</span></button>
                 `).join('');
-            } else { saveCat(wid, c, null); }
-        };
-
-        window.saveCat = async (wid, c, r) => {
-            if (wid !== "null") {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
-            } else {
-                const abv = prompt("度数", "40");
-                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
-            }
-            closeModal();
-        };
-
-        window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
-        window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
-        window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
-        window.closeModal = () => document.getElementById('modal').style.display = 'none';
-        document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
-        window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
-        window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
-    </script>
-</body>
-</html>
+            } else { save
