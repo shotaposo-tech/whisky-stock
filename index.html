@@ -105,10 +105,19 @@
             render();
         };
 
+        // 長押し検知用
+        let longPressTimer;
+        window.startPress = (id, name, memo) => {
+            longPressTimer = setTimeout(() => {
+                const newMemo = prompt(`【${name}】のメモを入力`, memo || "");
+                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
+            }, 800);
+        };
+        window.cancelPress = () => clearTimeout(longPressTimer);
+
         window.render = () => {
             const list = document.getElementById('whiskyList');
             document.getElementById('sort-remaining').style.display = (currentPage === 'archive') ? 'none' : 'block';
-            
             const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
 
             const filtered = items.filter(w => {
@@ -118,15 +127,12 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
-                // 【検索優先ロジック】前方一致（頭文字）を最優先にする
                 if (searchQuery) {
                     const aStarts = a.name.toLowerCase().startsWith(searchQuery);
                     const bStarts = b.name.toLowerCase().startsWith(searchQuery);
                     if (aStarts && !bStarts) return -1;
                     if (!aStarts && bStarts) return 1;
                 }
-
-                // 以降、通常のソート基準
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99;
                     const orderB = catOrder[b.category] || 99;
@@ -152,10 +158,17 @@
                     </div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
+                        ${(w.isWish && w.memo) ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic">Memo: ${w.memo}</p>` : ''}
                     </div>
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
-                            <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
+                            <button 
+                                ontouchstart="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                                ontouchend="cancelPress()" 
+                                onmousedown="startPress('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" 
+                                onmouseup="cancelPress()"
+                                onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" 
+                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
                         </div>
                     ` : `
                         <div class="slider-section" onclick="event.stopPropagation()">
