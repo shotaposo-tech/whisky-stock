@@ -13,7 +13,7 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         #whiskyList { padding-top: 20px; min-height: 100vh; }
         
-        .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: transform 0.2s ease; }
+        .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
         
         .color-Scotch { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.3), #020617) !important; border-color: rgba(37, 99, 235, 0.8) !important; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3), #020617) !important; border-color: rgba(16, 185, 129, 0.8) !important; }
@@ -24,33 +24,33 @@
 
         .whisky-card.is-archived { opacity: 0.25; filter: saturate(0.4); }
 
-        /* 左上のスペック（カテゴリ・度数） */
-        .pos-left-specs { position: absolute; top: 18px; left: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 20; }
+        /* 左上のスペック：カテゴリと度数を横並びに */
+        .pos-left-specs { position: absolute; top: 18px; left: 20px; display: flex; align-items: center; gap: 8px; z-index: 20; }
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
+        .abv-pill { color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
 
-        /* 右上のフレーバー */
         .pos-flv-container { position: absolute; top: 18px; right: 20px; display: flex; flex-direction: row-reverse; gap: 5px; z-index: 20; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         
-        /* 銘柄名：スペースをフルに活用 */
         .pos-name { position: absolute; top: 52%; left: 0; right: 0; transform: translateY(-50%); text-align: center; padding: 0 25px; z-index: 10; pointer-events: none; }
         .main-name { font-size: 1.55rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.05em; text-shadow: 0 2px 12px rgba(0,0,0,1); }
         .sub-memo { font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.4); margin-top: 10px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* 下部のスライダーセクション */
+        /* スライダー調整：ノブのみ反応させる */
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; pointer-events: none; /* レールを無効化 */ }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.6); pointer-events: auto; /* ノブだけ有効化 */ cursor: pointer; }
         .stock-num { font-family: ui-monospace, monospace; font-size: 1.2rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 50px; text-align: right; }
 
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; border-bottom: 2px solid transparent; }
         .nav-tab.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid #f59e0b; }
+        
+        /* ソートバー中央揃え */
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; white-space: nowrap; border: 1px solid transparent; }
         .sort-btn.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .bought-btn { position: absolute; bottom: 15px; left: 25px; right: 25px; background: linear-gradient(to right, #dc2626, #991b1b); color: #fff; font-size: 14px; font-weight: 900; padding: 12px; border-radius: 16px; text-transform: uppercase; letter-spacing: 0.2em; z-index: 35; text-align: center; }
-        
         #search-input { transition: all 0.3s ease; width: 0; opacity: 0; background: #1e293b; color: white; border-radius: 999px; font-size: 12px; border: none; outline: none; }
         #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; }
     </style>
@@ -73,7 +73,7 @@
                 <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
                 <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
             </nav>
-            <div id="sort-bar" class="flex items-center justify-start px-4 py-2 bg-slate-900/80 gap-2 overflow-x-auto no-scrollbar">
+            <div id="sort-bar" class="flex items-center justify-center px-4 py-2 bg-slate-900/80 gap-2 overflow-x-auto no-scrollbar">
                 <button onclick="setSort('name')" id="sort-name" class="sort-btn active">NAME</button>
                 <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
                 <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
@@ -137,6 +137,16 @@
 
         const render = () => {
             const list = document.getElementById('whiskyList');
+            const stockSortBtn = document.getElementById('sort-remaining');
+            
+            // ARCHIVEの時はSTOCKソートを消す
+            if (currentPage === 'archive') {
+                stockSortBtn.style.display = 'none';
+                if (currentSort === 'remaining') currentSort = 'name';
+            } else {
+                stockSortBtn.style.display = 'block';
+            }
+
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
                 const matchesSearch = (w.name?.toLowerCase().includes(searchQuery) || w.memo?.toLowerCase().includes(searchQuery));
@@ -157,10 +167,10 @@
             });
 
             list.innerHTML = filtered.map(w => `
-                <div class="whisky-card color-${w.category || 'Others'}">
+                <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archived' : ''}">
                     <div class="pos-left-specs">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.category || 'Cat'}</div>
-                        <div class="tag-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
+                        <div class="abv-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
                     <div class="pos-flv-container" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         ${(w.flavor ? w.flavor.split(', ') : ['Flavor']).map(f => `<span class="flv-badge">${f}</span>`).join('')}
@@ -171,7 +181,9 @@
                     </div>
                     ${w.isWish ? `<button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="bought-btn">BOUGHT</button>` : `
                         <div class="slider-section">
-                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
+                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
+                                onchange="updateStock('${w.id}', this.value)" 
+                                oninput="this.nextElementSibling.innerText=this.value+'%'">
                             <div class="stock-num" onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" onmouseup="memoUp()" ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" ontouchend="memoUp()">${w.remaining ?? 100}%</div>
                         </div>
                     `}
