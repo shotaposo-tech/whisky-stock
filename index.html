@@ -28,6 +28,10 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; pointer-events: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; }
 
+        /* リアルタイム検索窓のスタイル */
+        .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
+        .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
+
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
@@ -46,7 +50,9 @@
         <header class="bg-black/95 sticky top-0 z-50">
             <div class="px-6 py-3 flex justify-between items-center">
                 <h1 class="text-lg italic gold-text tracking-[0.2em]">Whisky Stock</h1>
-                <button onclick="handleSearch()" class="text-amber-500 p-2"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                <div class="relative flex items-center">
+                    <input type="text" id="searchInput" placeholder="Search..." oninput="updateSearch(this.value)" class="search-input">
+                </div>
             </div>
             <nav class="flex">
                 <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
@@ -95,13 +101,10 @@
             render();
         });
 
-        // 検索ハンドラー
-        window.handleSearch = () => {
-            const word = prompt("検索キーワードを入力（空欄でリセット）", searchQuery);
-            if (word !== null) {
-                searchQuery = word.toLowerCase();
-                render();
-            }
+        // リアルタイム検索用関数
+        window.updateSearch = (val) => {
+            searchQuery = val.toLowerCase();
+            render();
         };
 
         window.render = () => {
@@ -112,7 +115,6 @@
 
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
-                // 検索フィルタ（銘柄名で検索）
                 if (searchQuery && !w.name?.toLowerCase().includes(searchQuery)) return false;
                 
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
@@ -186,7 +188,6 @@
                 if (f === "None") selected = [];
                 else {
                     if (selected.includes(f)) selected = selected.filter(s => s !== f);
-                    // 最大2個までに制限
                     else if (selected.length < 2) selected.push(f);
                 }
                 await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { flavor: selected.length > 0 ? selected.join(', ') : "None" });
