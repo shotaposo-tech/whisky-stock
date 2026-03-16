@@ -32,7 +32,8 @@
         .sort-btn.active { background: #f59e0b; color: #000; }
         
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-btn { background-color: rgba(30, 41, 59, 1); color: white; padding: 1rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: bold; width: 100%; }
+        /* 文字の中央揃えを保証するスタイル */
+        .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; items-center; justify-content: center; line-height: 1.2; }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
 </head>
@@ -62,9 +63,9 @@
         <main id="whiskyList" class="flex-grow px-4 pb-40 pt-4"></main>
         
         <div id="modal">
-            <div class="bg-slate-900 w-[90%] max-w-sm rounded-[32px] p-8 border border-white/20">
+            <div class="bg-slate-900 w-[92%] max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
                 <span id="modalTitle" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
-                <div id="modalOptions" class="grid grid-cols-3 gap-3 justify-items-center"></div>
+                <div id="modalOptions" class="grid grid-cols-3 gap-3"></div>
                 <div class="mt-8 border-t border-white/10 pt-4">
                     <button onclick="closeModal()" class="w-full text-slate-400 font-bold py-2 tracking-widest">CLOSE</button>
                 </div>
@@ -130,24 +131,23 @@
                 </div>`}).join('');
         };
 
-        let tapCount = 0, tapTimer = null;
         window.handleTap = (e, id, name) => {
-            tapCount++;
-            if (tapCount === 1) {
-                tapTimer = setTimeout(() => {
+            window.tapCount = (window.tapCount || 0) + 1;
+            if (window.tapCount === 1) {
+                window.tapTimer = setTimeout(() => {
                     const n = prompt("銘柄名変更", name);
                     if (n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
-                    tapCount = 0;
+                    window.tapCount = 0;
                 }, 250);
             } else {
-                clearTimeout(tapTimer); tapCount = 0;
+                clearTimeout(window.tapTimer); window.tapCount = 0;
                 if (confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
             }
         };
 
         const flvList = ["Peaty", "Smoky", "Sweet", "Fruity", "Floral", "Spicy", "Sherry", "Oak", "Honey", "Vanilla", "Waxy", "Citrus", "Salty", "Malty", "None"];
         window.openFlvEdit = (id, name, current) => {
-            const m = document.getElementById('modal'); m.style.display = 'flex';
+            document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
             let selected = (current && current !== "None") ? current.split(', ') : [];
             const refresh = () => {
@@ -173,20 +173,24 @@
             tempName = name;
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn">${c}</button>`).join('');
+            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn"><span>${c}</span></button>`).join('');
         };
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
-                document.getElementById('modalOptions').innerHTML = regs.map((r, i) => `
-                    <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn ${i === 5 ? 'col-start-2' : ''}">${r}</button>
+                document.getElementById('modalOptions').innerHTML = regs.map(r => `
+                    <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn"><span>${r}</span></button>
                 `).join('');
             } else { saveCat(wid, c, null); }
         };
-        async function saveCat(wid, c, r) {
-            if (wid !== "null") { await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r }); }
-            else { const abv = prompt("度数", "40"); await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() }); }
+        window.saveCat = async (wid, c, r) => {
+            if (wid !== "null") {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
+            } else {
+                const abv = prompt("度数", "40");
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
+            }
             closeModal();
-        }
+        };
 
         window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
         window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
