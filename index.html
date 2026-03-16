@@ -10,10 +10,8 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
         
-        /* アーカイブ時のゴースト表示 */
         .is-archive { opacity: 0.55; }
 
-        /* カテゴリーごとのテーマカラー定義 */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); --theme: #3b82f6; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); --theme: #10b981; }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); --theme: #059669; }
@@ -22,10 +20,8 @@
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); --theme: #64748b; }
 
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); white-space: nowrap; }
-        
-        /* CAT表示の色は固定ゴールド、ABVはカテゴリーカラーに統一 */
-        .cat-pill { color: #fbbf24; }
-        .abv-pill { border-color: var(--theme); color: var(--theme); }
+        .cat-pill { color: #fbbf24; border-color: #fbbf24; }
+        .abv-pill { color: #fbbf24; border-color: #fbbf24; }
 
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
@@ -40,7 +36,6 @@
         .sort-btn.active { background: #f59e0b; color: #000; }
         
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        /* 文字の中央揃えを維持するボタン設定 */
         .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 1px solid rgba(255,255,255,0.05); }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
@@ -106,6 +101,9 @@
             const list = document.getElementById('whiskyList');
             document.getElementById('sort-remaining').style.display = (currentPage === 'archive') ? 'none' : 'block';
             
+            // カテゴリーの並び順定義
+            const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
+
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
                 if (!w.name?.toLowerCase().includes(searchQuery)) return false;
@@ -113,9 +111,16 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
+                if (currentSort === 'category') {
+                    const orderA = catOrder[a.category] || 99;
+                    const orderB = catOrder[b.category] || 99;
+                    if (orderA !== orderB) return orderA - orderB;
+                    // 同じカテゴリー（特にScotch）の場合、地域でソート
+                    return (a.region || "").localeCompare(b.region || "");
+                }
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                 if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
-                if (currentSort === 'category') return (a.category || "").localeCompare(b.category || "");
+                if (currentSort === 'flavor') return (a.flavor || "").localeCompare(b.flavor || "");
                 return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
             });
 
@@ -146,7 +151,6 @@
                 </div>`}).join('');
         };
 
-        // イベント管理
         window.handleTap = (e, id, name) => {
             window.tapCount = (window.tapCount || 0) + 1;
             if (window.tapCount === 1) {
@@ -211,7 +215,6 @@
             closeModal();
         };
 
-        // 共通機能
         window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
         window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
         window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
