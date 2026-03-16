@@ -8,17 +8,22 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
+        .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
         
-        .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); --theme: rgba(37,99,235,1); }
-        .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); --theme: rgba(16,185,129,1); }
-        .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); --theme: rgba(5,150,105,1); }
-        .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); --theme: rgba(245,158,11,1); }
-        .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); --theme: rgba(148,163,184,1); }
-        .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); --theme: rgba(71,85,105,1); }
+        /* アーカイブ時のゴースト表示 */
+        .is-archive { opacity: 0.6; }
+
+        .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); --theme: #3b82f6; }
+        .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); --theme: #10b981; }
+        .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); --theme: #059669; }
+        .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); --theme: #f59e0b; }
+        .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); --theme: #94a3b8; }
+        .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); --theme: #64748b; }
 
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); white-space: nowrap; }
+        /* 度数の色をテーマカラーに変更 */
         .abv-pill { border-color: var(--theme); color: var(--theme); }
+
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
 
@@ -32,8 +37,7 @@
         .sort-btn.active { background: #f59e0b; color: #000; }
         
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        /* 文字の中央揃えを保証するスタイル */
-        .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; items-center; justify-content: center; line-height: 1.2; }
+        .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
 </head>
@@ -111,7 +115,7 @@
             list.innerHTML = filtered.map(w => {
                 const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
                 return `
-                <div class="whisky-card color-${w.category || 'Others'}">
+                <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
                     <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
                         <div class="tag-pill text-[#fbbf24]" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.category === 'Scotch' ? `Scotch / ${w.region || '???'}` : (w.category || 'Cat')}</div>
                         <div class="tag-pill abv-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
@@ -122,8 +126,12 @@
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name text-center text-white text-shadow-lg">${w.name}</h3>
                     </div>
-                    ${w.isWish ? `<button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="absolute bottom-4 left-6 right-6 bg-red-600/80 py-3 rounded-xl font-black z-30">BOUGHT</button>` : `
-                        <div class="slider-section">
+                    ${w.isWish ? `
+                        <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
+                            <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
+                        </div>
+                    ` : `
+                        <div class="slider-section" onclick="event.stopPropagation()">
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
                             <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
                         </div>
