@@ -20,7 +20,6 @@
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); white-space: nowrap; }
         .abv-pill { border-color: var(--theme); color: var(--theme); }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        /* ゴースト表示用 */
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
 
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
@@ -108,10 +107,6 @@
 
             list.innerHTML = filtered.map(w => {
                 const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
-                const flvHtml = flvArray.length > 0 
-                    ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('')
-                    : `<span class="flv-badge ghost">None</span>`;
-
                 return `
                 <div class="whisky-card color-${w.category || 'Others'}">
                     <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
@@ -119,7 +114,7 @@
                         <div class="tag-pill abv-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
                     <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.flavor || ''}')">
-                        ${flvHtml}
+                        ${flvArray.length > 0 ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('') : `<span class="flv-badge ghost">None</span>`}
                     </div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
                         <h3 class="main-name text-center text-white text-shadow-lg">${w.name}</h3>
@@ -148,9 +143,7 @@
             }
         };
 
-        // フレーバーリスト（チョコレート->ソルティー, ナッティ->ワクシーに変更）
         const flvList = ["Peaty", "Smoky", "Sweet", "Fruity", "Floral", "Spicy", "Sherry", "Oak", "Honey", "Vanilla", "Waxy", "Citrus", "Salty", "Malty", "None"];
-        
         window.openFlvEdit = (id, name, current) => {
             const m = document.getElementById('modal'); m.style.display = 'flex';
             document.getElementById('modalTitle').innerText = `Flavor: ${name}`;
@@ -179,13 +172,14 @@
         window.closeModal = () => document.getElementById('modal').style.display = 'none';
 
         const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
-        let tempName = "", editId = null;
+        let tempName = "";
 
-        document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) { editId = null; openCatModal(); }};
-        window.openCatEdit = (id, name) => { editId = id; tempName = name; openCatModal(); };
-        const openCatModal = () => {
-            document.getElementById('modal').style.display = 'flex'; document.getElementById('modalTitle').innerText = tempName;
-            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${editId}', '${c}')" class="bg-slate-800 p-4 rounded-xl text-xs font-bold text-white">${c}</button>`).join('');
+        document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
+        window.openCatEdit = (id, name) => {
+            tempName = name;
+            const m = document.getElementById('modal'); m.style.display = 'flex';
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="bg-slate-800 p-4 rounded-xl text-xs font-bold text-white">${c}</button>`).join('');
         };
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
@@ -193,11 +187,14 @@
             } else { saveCat(wid, c, null); }
         };
         async function saveCat(wid, c, r) {
-            if (wid && wid !== "null") await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
-            else { const abv = prompt("度数", "40"); await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv), isWish: (currentPage === 'wish'), createdAt: serverTimestamp() }); }
+            if (wid !== "null") {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
+            } else {
+                const abv = prompt("度数", "40");
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
+            }
             closeModal();
         }
-
         window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
         window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
     </script>
