@@ -10,8 +10,10 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
         
-        .is-archive { opacity: 0.6; }
+        /* アーカイブ時のゴースト表示 */
+        .is-archive { opacity: 0.55; }
 
+        /* カテゴリーごとのテーマカラー定義 */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); --theme: #3b82f6; }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); --theme: #10b981; }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); --theme: #059669; }
@@ -19,9 +21,11 @@
         .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); --theme: #94a3b8; }
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); --theme: #64748b; }
 
-        .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); white-space: nowrap; color: #fbbf24; }
-        /* CATもABVも共通のオレンジ色に固定 */
-        .abv-pill { border-color: #fbbf24; }
+        .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); white-space: nowrap; }
+        
+        /* CAT表示の色は固定ゴールド、ABVはカテゴリーカラーに統一 */
+        .cat-pill { color: #fbbf24; }
+        .abv-pill { border-color: var(--theme); color: var(--theme); }
 
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
@@ -33,4 +37,188 @@
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
-        .sort-btn.
+        .sort-btn.active { background: #f59e0b; color: #000; }
+        
+        #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        /* 文字の中央揃えを維持するボタン設定 */
+        .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 1px solid rgba(255,255,255,0.05); }
+        .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
+        <div class="text-amber-500 font-bold animate-pulse tracking-[0.3em]">Master Collection</div>
+    </div>
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col hidden">
+        <header class="bg-black/95 sticky top-0 z-50">
+            <div class="px-6 py-3 flex justify-between items-center">
+                <h1 class="text-lg italic gold-text tracking-[0.2em]">Whisky Stock</h1>
+                <button onclick="searchQuery = prompt('検索キーワード')?.toLowerCase() || ''; render();" class="text-amber-500 p-2"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            </div>
+            <nav class="flex">
+                <div onclick="switchPage('shelf')" id="tab-shelf" class="nav-tab active">SHELF</div>
+                <div onclick="switchPage('wish')" id="tab-wish" class="nav-tab">WISH</div>
+                <div onclick="switchPage('archive')" id="tab-archive" class="nav-tab">ARCHIVE</div>
+            </nav>
+            <div class="flex items-center justify-center px-4 py-2 bg-slate-900/80 gap-2">
+                <button onclick="setSort('createdAt')" id="sort-createdAt" class="sort-btn active">NEWEST</button>
+                <button onclick="setSort('category')" id="sort-category" class="sort-btn">CAT</button>
+                <button onclick="setSort('flavor')" id="sort-flavor" class="sort-btn">FLV</button>
+                <button onclick="setSort('abv')" id="sort-abv" class="sort-btn">ABV</button>
+                <button onclick="setSort('remaining')" id="sort-remaining" class="sort-btn">STOCK</button>
+            </div>
+        </header>
+
+        <main id="whiskyList" class="flex-grow px-4 pb-40 pt-4"></main>
+        
+        <div id="modal">
+            <div class="bg-slate-900 w-[92%] max-w-sm rounded-[32px] p-8 border border-white/20 shadow-2xl">
+                <span id="modalTitle" class="text-white font-black mb-6 block text-lg border-l-4 border-amber-500 pl-3">---</span>
+                <div id="modalOptions" class="grid grid-cols-3 gap-3"></div>
+                <div class="mt-8 border-t border-white/10 pt-4">
+                    <button onclick="closeModal()" class="w-full text-slate-400 font-bold py-2 tracking-widest">CLOSE</button>
+                </div>
+            </div>
+        </div>
+
+        <button id="addBtn" class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-tr from-amber-900 to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center text-4xl z-30">＋</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyAk41dGtCDcDGMmvXmknE6MIJAlVi3AmLQ", authDomain: "my-whisky-app.firebaseapp.com", projectId: "my-whisky-app", storageBucket: "my-whisky-app.firebasestorage.app", messagingSenderId: "577760896040", appId: "1:577760896040:web:a3e9839ffeaacb8c63c11d" };
+        const f_app = initializeApp(firebaseConfig);
+        const db = getFirestore(f_app);
+        const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
+
+        let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
+
+        onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            render();
+        });
+
+        window.render = () => {
+            const list = document.getElementById('whiskyList');
+            document.getElementById('sort-remaining').style.display = (currentPage === 'archive') ? 'none' : 'block';
+            
+            const filtered = items.filter(w => {
+                const stock = w.remaining ?? 100;
+                if (!w.name?.toLowerCase().includes(searchQuery)) return false;
+                if (currentPage === 'shelf') return stock > 0 && !w.isWish;
+                if (currentPage === 'archive') return stock <= 0 && !w.isWish;
+                return w.isWish === true;
+            }).sort((a, b) => {
+                if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
+                if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
+                if (currentSort === 'category') return (a.category || "").localeCompare(b.category || "");
+                return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+            });
+
+            list.innerHTML = filtered.map(w => {
+                const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
+                return `
+                <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
+                    <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
+                        <div class="tag-pill cat-pill" onclick="openCatEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}')">${w.category === 'Scotch' ? `Scotch / ${w.region || '???'}` : (w.category || 'Cat')}</div>
+                        <div class="tag-pill abv-pill" onclick="editAbv('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.abv || 40}')">${w.abv || 40}%</div>
+                    </div>
+                    <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${w.name.replace(/'/g, "\\'")}', '${w.flavor || ''}')">
+                        ${flvArray.length > 0 ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('') : `<span class="flv-badge ghost">None</span>`}
+                    </div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}')">
+                        <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
+                    </div>
+                    ${w.isWish ? `
+                        <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
+                            <button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
+                        </div>
+                    ` : `
+                        <div class="slider-section" onclick="event.stopPropagation()">
+                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
+                            <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
+                        </div>
+                    `}
+                </div>`}).join('');
+        };
+
+        // イベント管理
+        window.handleTap = (e, id, name) => {
+            window.tapCount = (window.tapCount || 0) + 1;
+            if (window.tapCount === 1) {
+                window.tapTimer = setTimeout(() => {
+                    const n = prompt("銘柄名変更", name);
+                    if (n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                    window.tapCount = 0;
+                }, 250);
+            } else {
+                clearTimeout(window.tapTimer); window.tapCount = 0;
+                if (confirm(`「${name}」を削除しますか？`)) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
+            }
+        };
+
+        const flvList = ["Peaty", "Smoky", "Sweet", "Fruity", "Floral", "Spicy", "Sherry", "Oak", "Honey", "Vanilla", "Waxy", "Citrus", "Salty", "Malty", "None"];
+        window.openFlvEdit = (id, name, current) => {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = name;
+            let selected = (current && current !== "None") ? current.split(', ') : [];
+            const refresh = () => {
+                document.getElementById('modalOptions').innerHTML = flvList.map(f => `
+                    <button onclick="toggleFlv('${id}', '${f}')" class="modal-btn flv-opt-btn ${ (f === "None" && selected.length === 0) || selected.includes(f) ? 'selected' : ''}">${f}</button>
+                `).join('');
+            };
+            window.toggleFlv = async (wid, f) => {
+                if (f === "None") selected = [];
+                else {
+                    if (selected.includes(f)) selected = selected.filter(s => s !== f);
+                    else if (selected.length < 3) selected.push(f);
+                }
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { flavor: selected.length > 0 ? selected.join(', ') : "None" });
+                refresh();
+            };
+            refresh();
+        };
+
+        const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
+        let tempName = "";
+        
+        window.openCatEdit = (id, name) => {
+            tempName = name;
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn"><span>${c}</span></button>`).join('');
+        };
+
+        window.selCat = (wid, c) => {
+            if (c === 'Scotch') {
+                document.getElementById('modalOptions').innerHTML = regs.map(r => `
+                    <button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn"><span>${r}</span></button>
+                `).join('');
+            } else { saveCat(wid, c, null); }
+        };
+
+        window.saveCat = async (wid, c, r) => {
+            if (wid !== "null") {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r });
+            } else {
+                const abv = prompt("度数", "40");
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
+            }
+            closeModal();
+        };
+
+        // 共通機能
+        window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
+        window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
+        window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
+        window.closeModal = () => document.getElementById('modal').style.display = 'none';
+        document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
+        window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
+        window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
+    </script>
+</body>
+</html>
