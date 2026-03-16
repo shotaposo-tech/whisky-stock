@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         #whiskyList { padding-top: 20px; min-height: 100vh; }
         
@@ -33,9 +33,10 @@
         .flv-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.15); }
         .flv-empty { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px dashed rgba(255,255,255,0.15); box-shadow: none; }
 
+        /* 銘柄名のスタイル修正：ウェイトを300にし、文字間隔を調整 */
         .pos-name { position: absolute; top: 52%; left: 0; right: 54px; transform: translateY(-50%); text-align: center; padding: 0 20px; z-index: 10; user-select: none; }
-        .main-name { font-size: 1.35rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 8px rgba(0,0,0,0.9); pointer-events: none; }
-        .sub-memo { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+        .main-name { font-size: 1.45rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.05em; text-shadow: 0 2px 10px rgba(0,0,0,0.9); pointer-events: none; }
+        .sub-memo { font-size: 10px; font-weight: 400; color: rgba(255,255,255,0.35); margin-top: 8px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; letter-spacing: 0.02em; }
 
         .slider-section { position: absolute; bottom: 12px; left: 20px; right: 65px; display: flex; align-items: center; gap: 15px; z-index: 25; }
         .slider-wrap { flex: 1; height: 30px; display: flex; align-items: center; }
@@ -58,7 +59,6 @@
         .modal-btn.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.3) !important; color: #f59e0b; }
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-        /* 購入ボタン：赤色に変更 */
         .bought-btn { position: absolute; bottom: 12px; right: 65px; left: 20px; background: linear-gradient(to right, #dc2626, #991b1b); color: #fff; font-size: 13px; font-weight: 900; padding: 10px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220,38,38,0.3); z-index: 35; text-transform: uppercase; letter-spacing: 0.2em; }
         
         #search-input { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0; opacity: 0; padding: 0; transform: translateX(10px); }
@@ -160,8 +160,6 @@
 
         const render = () => {
             const list = document.getElementById('whiskyList');
-            
-            // ARCHIVEページなら残量ソートを非表示にする
             const stockSortBtn = document.getElementById('sort-remaining');
             if (currentPage === 'archive') stockSortBtn.classList.add('hidden');
             else stockSortBtn.classList.remove('hidden');
