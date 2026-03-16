@@ -25,7 +25,6 @@
         .whisky-card.is-archived { opacity: 0.25; filter: saturate(0.4); }
 
         .pos-left-specs { position: absolute; top: 18px; left: 20px; display: flex; align-items: center; gap: 8px; z-index: 20; }
-        /* 度数も四角い枠に変更 */
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.2); color: #fbbf24; white-space: nowrap; }
 
         .pos-flv-container { position: absolute; top: 18px; right: 20px; display: flex; flex-direction: row-reverse; gap: 5px; z-index: 20; }
@@ -48,8 +47,6 @@
 
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .bought-btn { position: absolute; bottom: 15px; left: 25px; right: 25px; background: linear-gradient(to right, #dc2626, #991b1b); color: #fff; font-size: 14px; font-weight: 900; padding: 12px; border-radius: 16px; text-transform: uppercase; letter-spacing: 0.2em; z-index: 35; text-align: center; }
-        #search-input { transition: all 0.3s ease; width: 0; opacity: 0; background: #1e293b; color: white; border-radius: 999px; font-size: 12px; border: none; outline: none; }
-        #search-input.active { width: 140px; opacity: 1; padding: 4px 12px; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -61,7 +58,7 @@
             <div class="px-6 py-3 flex justify-between items-center">
                 <h1 class="text-lg italic gold-text uppercase tracking-[0.2em]">Whisky Stock</h1>
                 <div class="flex items-center">
-                    <input type="text" id="search-input" placeholder="銘柄・メモ検索">
+                    <input type="text" id="search-input" placeholder="検索..." class="hidden">
                     <button onclick="toggleSearch()" class="text-amber-500 p-2"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
                 </div>
             </div>
@@ -110,27 +107,16 @@
 
         let items = [];
         let currentPage = 'shelf';
-        let currentSort = 'createdAt'; // デフォルトを入れた順に
+        let currentSort = 'createdAt'; 
         let searchQuery = "";
-        let lastTapTime = 0;
-        let tapTimer = null;
-        let memoTimer = null;
 
-        onSnapshot(query(collection(db, "users", targetUID, "whiskies"), orderBy("createdAt", "desc")), (snap) => {
+        // 初期読み込みを確実に
+        onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             render();
         });
-
-        window.toggleSearch = () => {
-            const input = document.getElementById('search-input');
-            input.classList.toggle('active');
-            if (input.classList.contains('active')) input.focus();
-            else { input.value = ""; searchQuery = ""; render(); }
-        };
-
-        document.getElementById('search-input').oninput = (e) => { searchQuery = e.target.value.toLowerCase(); render(); };
 
         const render = () => {
             const list = document.getElementById('whiskyList');
@@ -143,22 +129,25 @@
 
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
-                const matchesSearch = (w.name?.toLowerCase().includes(searchQuery) || w.memo?.toLowerCase().includes(searchQuery));
+                const matchesSearch = (w.name?.toLowerCase().includes(searchQuery) || (w.memo || "").toLowerCase().includes(searchQuery));
                 if (!matchesSearch) return false;
                 if (currentPage === 'shelf') return stock > 0 && !w.isWish;
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
-                return w.isWish === true;
+                if (currentPage === 'wish') return w.isWish === true;
+                return false;
             });
 
             filtered.sort((a, b) => {
                 if (currentSort === 'abv') return (b.abv || 0) - (a.abv || 0);
                 if (currentSort === 'remaining') return (a.remaining ?? 100) - (b.remaining ?? 100);
-                if (currentSort === 'createdAt') return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
                 if (currentSort === 'category') {
                     const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
                     return (catOrder[a.category] || 99) - (catOrder[b.category] || 99);
                 }
-                return (a[currentSort] || "").localeCompare(b[currentSort] || "", 'ja');
+                // createdAt（NEWEST）のソート：nullや欠落を考慮
+                const timeA = a.createdAt?.seconds || 0;
+                const timeB = b.createdAt?.seconds || 0;
+                return timeB - timeA;
             });
 
             list.innerHTML = filtered.map(w => `
@@ -177,7 +166,7 @@
                     ${w.isWish ? `<button onclick="buyBottle('${w.id}', '${w.name.replace(/'/g, "\\'")}')" class="bought-btn">BOUGHT</button>` : `
                         <div class="slider-section">
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
-                            <div class="stock-num" onmousedown="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" onmouseup="memoUp()" ontouchstart="memoDown(event, '${w.id}', '${w.name.replace(/'/g, "\\'")}', '${(w.memo || "").replace(/'/g, "\\'")}')" ontouchend="memoUp()">${w.remaining ?? 100}%</div>
+                            <div class="stock-num">${w.remaining ?? 100}%</div>
                         </div>
                     `}
                 </div>`).join('');
@@ -187,7 +176,7 @@
         window.switchPage = (p) => { currentPage = p; document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.id === `tab-${p}`)); render(); };
         window.setSort = (k) => { currentSort = k; document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.id === `sort-${k}`)); render(); };
         window.closeModal = () => { document.getElementById('modal').style.display = 'none'; };
-        
+
         const categories = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"];
         const scotRegions = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
         let tName = "", eTargetId = null;
@@ -209,9 +198,7 @@
             if (mode === 'cat') {
                 if (val === 'Scotch') { openModal(scotRegions, 'region'); return; }
                 await saveBottle(val, null);
-            } else if (mode === 'region') {
-                await saveBottle('Scotch', val);
-            }
+            } else if (mode === 'region') { await saveBottle('Scotch', val); }
         };
 
         async function saveBottle(cat, reg) {
@@ -227,23 +214,19 @@
             closeModal();
         }
 
+        let lastTapTime = 0;
         window.handleNameClick = (e, id, name) => {
             const now = Date.now();
             if (now - lastTapTime < 250) {
                 if (confirm("削除しますか？")) deleteDoc(doc(db, "users", targetUID, "whiskies", id));
             } else {
                 lastTapTime = now;
-                tapTimer = setTimeout(() => {
-                    const n = prompt("名前変更", name);
-                    if (n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                setTimeout(() => {
+                    if (Date.now() - lastTapTime >= 250) {
+                        const n = prompt("名前変更", name);
+                        if (n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { name: n });
+                    }
                 }, 250);
-            }
-        };
-
-        window.buyBottle = async (id, name) => {
-            if(confirm(`「${name}」を購入しました。SHELFに移動します。`)) {
-                await updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() });
-                switchPage('shelf');
             }
         };
 
@@ -252,8 +235,12 @@
             if (n !== null) await updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) || old }); 
         };
 
-        window.memoDown = (e, id, name, current) => { memoTimer = setTimeout(() => { const m = prompt("メモ", current); if (m !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: m }); }, 600); };
-        window.memoUp = () => clearTimeout(memoTimer);
+        window.buyBottle = async (id, name) => {
+            if(confirm(`「${name}」を購入しました。`)) {
+                await updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() });
+                switchPage('shelf');
+            }
+        };
     </script>
 </body>
 </html>
