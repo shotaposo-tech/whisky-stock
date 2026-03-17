@@ -6,38 +6,46 @@
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 全体で文字選択を禁止して長押し時の青い選択を防ぐ */
+        /* 全体で文字選択を禁止し、モバイルでの誤選択を防止 */
         * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
-        input { -webkit-user-select: text; user-select: text; } /* 検索窓などは入力可能に */
+        input { -webkit-user-select: text; user-select: text; }
 
         body { background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
         .is-archive { opacity: 0.55; }
+
+        /* カテゴリー別背景 */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
         .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); }
         .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); }
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); }
+
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
+
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; cursor: pointer; }
+
         .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
         .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
+
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
         .sort-btn.active { background: #f59e0b; color: #000; }
+        
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 1px solid rgba(255,255,255,0.05); }
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
+<body oncontextmenu="return false;">
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
         <div class="text-amber-500 font-bold animate-pulse tracking-[0.3em]">Master Collection</div>
     </div>
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col hidden">
@@ -87,6 +95,7 @@
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
+        let longPressTimer, isLongPressActive = false;
 
         onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -100,18 +109,21 @@
             render();
         };
 
-        // 長押し処理：選択をクリアする機能を追加
-        let longPressTimer;
+        // 長押しロジック：フラグ管理でclickイベントとの衝突を回避
         window.startPress = (id, name, memo) => {
+            isLongPressActive = false; 
             longPressTimer = setTimeout(() => {
-                // 長押し確定時に選択を解除
+                isLongPressActive = true; 
                 window.getSelection().removeAllRanges();
                 const newMemo = prompt(`【${name}】のメモ`, memo || "");
                 if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
             }, 800);
         };
+
         window.cancelPress = () => {
             clearTimeout(longPressTimer);
+            // clickイベントが走る前にフラグを下ろさないよう、わずかに遅延させる
+            setTimeout(() => { isLongPressActive = false; }, 200);
         };
 
         window.render = () => {
@@ -246,7 +258,11 @@
         window.closeModal = () => document.getElementById('modal').style.display = 'none';
         document.getElementById('addBtn').onclick = () => { tempName = prompt("銘柄名"); if(tempName) openCatEdit("null", tempName); };
         window.editAbv = (id, name, old) => { const n = prompt(`${name} 度数(%)`, old); if(n) updateDoc(doc(db, "users", targetUID, "whiskies", id), { abv: parseFloat(n) }); };
-        window.buyBottle = (id, name) => { if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); };
+        
+        window.buyBottle = (id, name) => { 
+            if (isLongPressActive) return; // 長押し完了直後のクリックを無視
+            if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); 
+        };
     </script>
 </body>
 </html>
