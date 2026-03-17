@@ -6,6 +6,7 @@
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 文字選択を徹底排除 */
         * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
         input { -webkit-user-select: text; user-select: text; }
         body { background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
@@ -82,7 +83,34 @@
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
-        let longPressTimer, isLongPressActive = false;
+        
+        // --- 強化版：長押し・タップ管理ロジック ---
+        let pressTimer;
+        let isLongPress = false;
+
+        window.handlePressStart = (id, name, memo) => {
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                // 長押し確定：メモ編集
+                const newMemo = prompt(`【${name}】のメモ`, memo || "");
+                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
+            }, 600); // 0.6秒で長押し判定
+        };
+
+        window.handlePressEnd = (id, name, event) => {
+            clearTimeout(pressTimer);
+            if (!isLongPress) {
+                // 長押しにならなかった場合のみ「購入確認」を実行
+                buyBottle(id, name);
+            }
+            // イベントの連鎖（click誤爆）を完全に防ぐ
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+        // ---------------------------------------
 
         onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -92,23 +120,6 @@
         });
 
         window.updateSearch = (val) => { searchQuery = val.toLowerCase(); render(); };
-
-        window.startPress = (id, name, memo) => {
-            isLongPressActive = false;
-            longPressTimer = setTimeout(() => {
-                isLongPressActive = true; // ここで確定
-                const newMemo = prompt(`【${name}】のメモ`, memo || "");
-                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
-            }, 700);
-        };
-
-        window.cancelPress = () => {
-            clearTimeout(longPressTimer);
-            // 離してからもしばらくはフラグを維持して、ブラウザの自動クリックを弾く
-            if (isLongPressActive) {
-                setTimeout(() => { isLongPressActive = false; }, 500);
-            }
-        };
 
         window.render = () => {
             const list = document.getElementById('whiskyList');
@@ -151,16 +162,17 @@
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
                             <button 
-                                ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()" 
-                                onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()"
-                                onclick="buyBottle('${w.id}', '${safeName}')" 
-                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs">BOUGHT</button>
+                                ontouchstart="handlePressStart('${w.id}', '${safeName}', '${safeMemo}')" 
+                                ontouchend="handlePressEnd('${w.id}', '${safeName}', event)"
+                                onmousedown="handlePressStart('${w.id}', '${safeName}', '${safeMemo}')"
+                                onmouseup="handlePressEnd('${w.id}', '${safeName}', event)"
+                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs active:scale-95 transition-transform">BOUGHT</button>
                         </div>
                     ` : `
-                        <div class="slider-section" onclick="event.stopPropagation()" 
-                             ontouchstart="startPress('${w.id}', '${safeName}', '${safeMemo}')" ontouchend="cancelPress()"
-                             onmousedown="startPress('${w.id}', '${safeName}', '${safeMemo}')" onmouseup="cancelPress()">
-                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
+                        <div class="slider-section" onclick="event.stopPropagation()">
+                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
+                                onchange="updateStock('${w.id}', this.value)" 
+                                oninput="this.nextElementSibling.innerText=this.value+'%'">
                             <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
                         </div>
                     `}
@@ -221,8 +233,12 @@
         };
 
         window.buyBottle = (id, name) => { 
-            if (isLongPressActive) return; // 長押しフラグが立っていたら絶対に通さない
-            if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); 
+            if(confirm(`${name}を購入しました。`)) {
+                updateDoc(doc(db, "users", targetUID, "whiskies", id), { 
+                    isWish: false, 
+                    createdAt: serverTimestamp() 
+                }); 
+            }
         };
 
         window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
