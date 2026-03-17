@@ -12,12 +12,15 @@
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
         .is-archive { opacity: 0.55; }
+        
+        /* カテゴリー別カラー定義（カードとモーダルボタン共通） */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
         .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); }
         .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); }
         .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); }
+
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
@@ -31,7 +34,7 @@
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
         .sort-btn.active { background: #f59e0b; color: #000; }
         #modal { display: none; z-index: 100; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-btn { background-color: #1e293b; color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 1px solid rgba(255,255,255,0.05); }
+        .modal-btn { color: white; padding: 1rem 0.5rem; border-radius: 0.75rem; font-size: 11px; font-weight: bold; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.2; border: 2px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -83,29 +86,23 @@
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
         
-        // --- 強化版：ダブルタップ検知ロジック ---
         let lastTap = 0;
         let tapTimeout;
 
         window.handleWhiskyAction = (id, name, memo, type) => {
             const now = new Date().getTime();
             const timesince = now - lastTap;
-            
             if (timesince < 300 && timesince > 0) {
-                // ダブルタップ成立：メモ編集
                 clearTimeout(tapTimeout);
                 const newMemo = prompt(`【${name}】のメモ`, memo || "");
                 if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
             } else {
-                // シングルタップの可能性があるため待機
                 tapTimeout = setTimeout(() => {
                     if (type === 'BOUGHT') buyBottle(id, name);
-                    // 残量パーセントはタップ時は何もしない（スライダーで操作するため）
                 }, 300);
             }
             lastTap = now;
         };
-        // ---------------------------------------
 
         onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -195,7 +192,7 @@
             let selected = (current && current !== "None") ? current.split(', ') : [];
             const refresh = () => {
                 document.getElementById('modalOptions').innerHTML = flvList.map(f => `
-                    <button onclick="toggleFlv('${id}', '${f}')" class="modal-btn ${ (f === "None" && selected.length === 0) || selected.includes(f) ? 'bg-amber-500 text-black' : ''}">${f}</button>
+                    <button onclick="toggleFlv('${id}', '${f}')" class="modal-btn ${ (f === "None" && selected.length === 0) || selected.includes(f) ? 'bg-amber-500 text-black' : 'bg-slate-800'}">${f}</button>
                 `).join('');
             };
             window.toggleFlv = async (wid, f) => {
@@ -211,11 +208,13 @@
         window.openCatEdit = (id, name) => {
             tempName = name; document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn"><span>${c}</span></button>`).join('');
+            // 修正：モーダルボタンに各カテゴリーのクラスを付与
+            document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn color-${c}"><span>${c}</span></button>`).join('');
         };
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
-                document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn"><span>${r}</span></button>`).join('');
+                // Scotch選択時はScotchカラーを維持してリージョンを表示
+                document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn color-Scotch"><span>${r}</span></button>`).join('');
             } else { saveCat(wid, c, null); }
         };
         window.saveCat = async (wid, c, r) => {
@@ -228,9 +227,7 @@
         };
 
         window.buyBottle = (id, name) => { 
-            if(confirm(`${name}を購入しました。`)) {
-                updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); 
-            }
+            if(confirm(`${name}を購入しました。`)) updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); 
         };
 
         window.updateStock = (id, val) => updateDoc(doc(db, "users", targetUID, "whiskies", id), { remaining: parseInt(val) });
