@@ -6,7 +6,11 @@
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { -webkit-tap-highlight-color: transparent; background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        /* 全体で文字選択を禁止して長押し時の青い選択を防ぐ */
+        * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+        input { -webkit-user-select: text; user-select: text; } /* 検索窓などは入力可能に */
+
+        body { background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .gold-text { background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; transition: opacity 0.3s; }
         .is-archive { opacity: 0.55; }
@@ -20,8 +24,8 @@
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; pointer-events: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; pointer-events: auto; cursor: pointer; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; cursor: pointer; }
         .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
         .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
@@ -33,8 +37,7 @@
         .flv-opt-btn.selected { background: #f59e0b !important; color: #000 !important; border: 2px solid white; }
     </style>
 </head>
-<body>
-    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
+<body oncontextmenu="return false;"> <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
         <div class="text-amber-500 font-bold animate-pulse tracking-[0.3em]">Master Collection</div>
     </div>
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col hidden">
@@ -97,14 +100,19 @@
             render();
         };
 
+        // 長押し処理：選択をクリアする機能を追加
         let longPressTimer;
         window.startPress = (id, name, memo) => {
             longPressTimer = setTimeout(() => {
+                // 長押し確定時に選択を解除
+                window.getSelection().removeAllRanges();
                 const newMemo = prompt(`【${name}】のメモ`, memo || "");
                 if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
             }, 800);
         };
-        window.cancelPress = () => clearTimeout(longPressTimer);
+        window.cancelPress = () => {
+            clearTimeout(longPressTimer);
+        };
 
         window.render = () => {
             const list = document.getElementById('whiskyList');
@@ -152,7 +160,7 @@
                     </div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${safeName}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
-                        ${w.memo ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic">Memo: ${w.memo}</p>` : ''}
+                        ${w.memo ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic text-center">${w.memo}</p>` : ''}
                     </div>
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
