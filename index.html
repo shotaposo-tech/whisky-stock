@@ -6,7 +6,6 @@
     <title>Whisky Stock Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 文字選択を徹底排除 */
         * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
         input { -webkit-user-select: text; user-select: text; }
         body { background-color: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; overflow-x: hidden; }
@@ -84,31 +83,27 @@
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
         
-        // --- 強化版：長押し・タップ管理ロジック ---
-        let pressTimer;
-        let isLongPress = false;
+        // --- 強化版：ダブルタップ検知ロジック ---
+        let lastTap = 0;
+        let tapTimeout;
 
-        window.handlePressStart = (id, name, memo) => {
-            isLongPress = false;
-            pressTimer = setTimeout(() => {
-                isLongPress = true;
-                // 長押し確定：メモ編集
+        window.handleWhiskyAction = (id, name, memo, type) => {
+            const now = new Date().getTime();
+            const timesince = now - lastTap;
+            
+            if (timesince < 300 && timesince > 0) {
+                // ダブルタップ成立：メモ編集
+                clearTimeout(tapTimeout);
                 const newMemo = prompt(`【${name}】のメモ`, memo || "");
                 if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
-            }, 600); // 0.6秒で長押し判定
-        };
-
-        window.handlePressEnd = (id, name, event) => {
-            clearTimeout(pressTimer);
-            if (!isLongPress) {
-                // 長押しにならなかった場合のみ「購入確認」を実行
-                buyBottle(id, name);
+            } else {
+                // シングルタップの可能性があるため待機
+                tapTimeout = setTimeout(() => {
+                    if (type === 'BOUGHT') buyBottle(id, name);
+                    // 残量パーセントはタップ時は何もしない（スライダーで操作するため）
+                }, 300);
             }
-            // イベントの連鎖（click誤爆）を完全に防ぐ
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+            lastTap = now;
         };
         // ---------------------------------------
 
@@ -162,18 +157,18 @@
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
                             <button 
-                                ontouchstart="handlePressStart('${w.id}', '${safeName}', '${safeMemo}')" 
-                                ontouchend="handlePressEnd('${w.id}', '${safeName}', event)"
-                                onmousedown="handlePressStart('${w.id}', '${safeName}', '${safeMemo}')"
-                                onmouseup="handlePressEnd('${w.id}', '${safeName}', event)"
-                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs active:scale-95 transition-transform">BOUGHT</button>
+                                onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'BOUGHT')" 
+                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs active:scale-95">BOUGHT</button>
                         </div>
                     ` : `
                         <div class="slider-section" onclick="event.stopPropagation()">
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
                                 onchange="updateStock('${w.id}', this.value)" 
                                 oninput="this.nextElementSibling.innerText=this.value+'%'">
-                            <div class="stock-num text-[1.2rem] font-black">${w.remaining ?? 100}%</div>
+                            <div class="stock-num text-[1.2rem] font-black cursor-pointer" 
+                                 onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'STOCK')">
+                                ${w.remaining ?? 100}%
+                            </div>
                         </div>
                     `}
                 </div>`}).join('');
@@ -234,10 +229,7 @@
 
         window.buyBottle = (id, name) => { 
             if(confirm(`${name}を購入しました。`)) {
-                updateDoc(doc(db, "users", targetUID, "whiskies", id), { 
-                    isWish: false, 
-                    createdAt: serverTimestamp() 
-                }); 
+                updateDoc(doc(db, "users", targetUID, "whiskies", id), { isWish: false, createdAt: serverTimestamp() }); 
             }
         };
 
