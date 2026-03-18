@@ -13,7 +13,6 @@
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
         .is-archive { opacity: 0.55; }
         
-        /* カテゴリー別カラー定義（カードとモーダルボタン共通） */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
@@ -123,6 +122,14 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
+                // --- 検索ワード優先表示ロジック ---
+                if (searchQuery) {
+                    const aStarts = a.name.toLowerCase().startsWith(searchQuery);
+                    const bStarts = b.name.toLowerCase().startsWith(searchQuery);
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                }
+                // --- 以下、既存のソート機能（維持） ---
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99, orderB = catOrder[b.category] || 99;
                     return orderA !== orderB ? orderA - orderB : (a.region || "").localeCompare(b.region || "");
@@ -208,12 +215,10 @@
         window.openCatEdit = (id, name) => {
             tempName = name; document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
-            // 修正：モーダルボタンに各カテゴリーのクラスを付与
             document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn color-${c}"><span>${c}</span></button>`).join('');
         };
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
-                // Scotch選択時はScotchカラーを維持してリージョンを表示
                 document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn color-Scotch"><span>${r}</span></button>`).join('');
             } else { saveCat(wid, c, null); }
         };
