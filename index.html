@@ -84,7 +84,9 @@
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
-        let lastTap = 0, tapTimeout;
+        
+        let lastTap = 0;
+        let tapTimeout;
 
         window.handleWhiskyAction = (id, name, memo, type) => {
             const now = new Date().getTime();
@@ -113,16 +115,6 @@
         window.render = () => {
             const list = document.getElementById('whiskyList');
             const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
-            
-            // --- ARCHIVEのときだけSTOCKボタンを隠す ---
-            const stockBtn = document.getElementById('sort-remaining');
-            if (currentPage === 'archive') {
-                stockBtn.style.display = 'none';
-                if (currentSort === 'remaining') setSort('createdAt'); // 在庫順なら新着順に強制変更
-            } else {
-                stockBtn.style.display = 'block';
-            }
-
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
                 if (searchQuery && !w.name?.toLowerCase().includes(searchQuery)) return false;
@@ -130,12 +122,14 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
+                // --- 検索ワード優先表示ロジック ---
                 if (searchQuery) {
                     const aStarts = a.name.toLowerCase().startsWith(searchQuery);
                     const bStarts = b.name.toLowerCase().startsWith(searchQuery);
                     if (aStarts && !bStarts) return -1;
                     if (!aStarts && bStarts) return 1;
                 }
+                // --- 以下、既存のソート機能（維持） ---
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99, orderB = catOrder[b.category] || 99;
                     return orderA !== orderB ? orderA - orderB : (a.region || "").localeCompare(b.region || "");
@@ -166,12 +160,17 @@
                     </div>
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
-                            <button onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'BOUGHT')" class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs active:scale-95">BOUGHT</button>
+                            <button 
+                                onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'BOUGHT')" 
+                                class="w-32 bg-red-600/80 py-2 rounded-xl font-black text-xs active:scale-95">BOUGHT</button>
                         </div>
                     ` : `
                         <div class="slider-section" onclick="event.stopPropagation()">
-                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" onchange="updateStock('${w.id}', this.value)" oninput="this.nextElementSibling.innerText=this.value+'%'">
-                            <div class="stock-num text-[1.2rem] font-black cursor-pointer" onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'STOCK')">
+                            <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
+                                onchange="updateStock('${w.id}', this.value)" 
+                                oninput="this.nextElementSibling.innerText=this.value+'%'">
+                            <div class="stock-num text-[1.2rem] font-black cursor-pointer" 
+                                 onclick="handleWhiskyAction('${w.id}', '${safeName}', '${safeMemo}', 'STOCK')">
                                 ${w.remaining ?? 100}%
                             </div>
                         </div>
