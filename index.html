@@ -20,9 +20,11 @@
         .color-Canadian { background: radial-gradient(circle at center, rgba(236,72,153,0.3), #020617); border-color: rgba(236,72,153,0.8); }
         .color-Others { background: radial-gradient(circle at center, rgba(71,85,105,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
+        /* タグのデザイン */
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; width: fit-content; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
+        
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; cursor: pointer; }
@@ -114,12 +116,6 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
-                if (searchQuery) {
-                    const aStarts = a.name.toLowerCase().startsWith(searchQuery);
-                    const bStarts = b.name.toLowerCase().startsWith(searchQuery);
-                    if (aStarts && !bStarts) return -1;
-                    if (!aStarts && bStarts) return 1;
-                }
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99, orderB = catOrder[b.category] || 99;
                     return orderA !== orderB ? orderA - orderB : (a.region || "").localeCompare(b.region || "");
@@ -141,17 +137,20 @@
 
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
-                    <div class="absolute top-4 left-5 flex flex-col gap-1.5 z-20">
+                    <div class="absolute top-4 left-5 flex flex-col gap-2 z-20">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${safeName}')">${label}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${safeName}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
+
                     <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${safeName}', '${w.flavor || ''}')">
                         ${flvArray.length > 0 ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('') : `<span class="flv-badge ghost">None</span>`}
                     </div>
+
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${safeName}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
                         ${w.memo ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic text-center px-4">${w.memo}</p>` : ''}
                     </div>
+
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
                             <button 
