@@ -13,12 +13,13 @@
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
         .is-archive { opacity: 0.55; }
         
+        /* カテゴリーごとのグラデーション色設定 */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
         .color-American { background: radial-gradient(circle at center, rgba(245,158,11,0.3), #020617); border-color: rgba(245,158,11,0.8); }
-        .color-Blended { background: radial-gradient(circle at center, rgba(148,163,184,0.2), #020617); border-color: rgba(148,163,184,0.6); }
-        .color-Others { background: radial-gradient(circle at center, rgba(51,65,85,0.3), #020617); border-color: rgba(71,85,105,0.8); }
+        .color-Canadian { background: radial-gradient(circle at center, rgba(236,72,153,0.3), #020617); border-color: rgba(236,72,153,0.8); }
+        .color-Others { background: radial-gradient(circle at center, rgba(71,85,105,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
         .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -27,7 +28,6 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; cursor: pointer; }
         
-        /* 検索バー周りの調整 */
         .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 30px 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
         .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
         .clear-btn { position: absolute; right: 8px; color: #64748b; font-size: 18px; display: none; cursor: pointer; }
@@ -94,21 +94,6 @@
         let lastTap = 0;
         let tapTimeout;
 
-        window.handleWhiskyAction = (id, name, memo, type) => {
-            const now = new Date().getTime();
-            const timesince = now - lastTap;
-            if (timesince < 300 && timesince > 0) {
-                clearTimeout(tapTimeout);
-                const newMemo = prompt(`【${name}】のメモ`, memo || "");
-                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
-            } else {
-                tapTimeout = setTimeout(() => {
-                    if (type === 'BOUGHT') buyBottle(id, name);
-                }, 300);
-            }
-            lastTap = now;
-        };
-
         onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
@@ -117,19 +102,15 @@
         });
 
         window.updateSearch = (val) => { searchQuery = val.toLowerCase(); render(); };
-
-        // 検索をクリアする関数を追加
         window.clearSearch = () => {
             const input = document.getElementById('searchInput');
-            input.value = "";
-            searchQuery = "";
-            render();
-            input.focus();
+            input.value = ""; searchQuery = ""; render(); input.focus();
         };
 
         window.render = () => {
             const list = document.getElementById('whiskyList');
-            const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
+            // ソート順の定義
+            const catOrder = { "Scotch": 1, "Japanese": 2, "Irish": 3, "American": 4, "Canadian": 5, "Others": 6 };
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
                 if (searchQuery && !w.name?.toLowerCase().includes(searchQuery)) return false;
@@ -223,7 +204,8 @@
             refresh();
         };
 
-        const cats = ["Scotch", "Japanese", "Blended", "Irish", "American", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
+        // カテゴリー配列の変更
+        const cats = ["Scotch", "Japanese", "Irish", "American", "Canadian", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
         let tempName = "";
         window.openCatEdit = (id, name) => {
             tempName = name; document.getElementById('modal').style.display = 'flex';
@@ -242,6 +224,21 @@
                 await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
             }
             closeModal();
+        };
+
+        window.handleWhiskyAction = (id, name, memo, type) => {
+            const now = new Date().getTime();
+            const timesince = now - lastTap;
+            if (timesince < 300 && timesince > 0) {
+                clearTimeout(tapTimeout);
+                const newMemo = prompt(`【${name}】のメモ`, memo || "");
+                if (newMemo !== null) updateDoc(doc(db, "users", targetUID, "whiskies", id), { memo: newMemo });
+            } else {
+                tapTimeout = setTimeout(() => {
+                    if (type === 'BOUGHT') buyBottle(id, name);
+                }, 300);
+            }
+            lastTap = now;
         };
 
         window.buyBottle = (id, name) => { 
