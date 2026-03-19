@@ -13,7 +13,6 @@
         .whisky-card { height: 180px; border-radius: 28px; border: 4px solid rgba(255,255,255,0.15); position: relative; margin-bottom: 1.5rem; background: #020617; overflow: hidden; }
         .is-archive { opacity: 0.55; }
         
-        /* カテゴリーごとのグラデーション色設定 */
         .color-Scotch { background: radial-gradient(circle at center, rgba(37,99,235,0.3), #020617); border-color: rgba(37,99,235,0.8); }
         .color-Japanese { background: radial-gradient(circle at center, rgba(16,185,129,0.3), #020617); border-color: rgba(16,185,129,0.8); }
         .color-Irish { background: radial-gradient(circle at center, rgba(5,150,105,0.3), #020617); border-color: rgba(5,150,105,0.8); }
@@ -90,9 +89,7 @@
         const targetUID = "yE6g8Wf24sgKDat5wracCN2STTJ2"; 
 
         let items = [], currentPage = 'shelf', currentSort = 'createdAt', searchQuery = "";
-        
-        let lastTap = 0;
-        let tapTimeout;
+        let lastTap = 0, tapTimeout;
 
         onSnapshot(collection(db, "users", targetUID, "whiskies"), (snap) => {
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -109,7 +106,6 @@
 
         window.render = () => {
             const list = document.getElementById('whiskyList');
-            // ソート順の定義
             const catOrder = { "Scotch": 1, "Japanese": 2, "Irish": 3, "American": 4, "Canadian": 5, "Others": 6 };
             const filtered = items.filter(w => {
                 const stock = w.remaining ?? 100;
@@ -138,11 +134,16 @@
                 const flvArray = (w.flavor && w.flavor !== "None") ? w.flavor.split(', ') : [];
                 const safeName = w.name.replace(/'/g, "\\'");
                 const safeMemo = (w.memo || "").replace(/'/g, "\\'");
+                
+                // 表示ラベルの構築
+                let label = w.category || 'Cat';
+                if (w.category === 'Scotch' && w.region) label += ` / ${w.region}`;
+                if (w.subType) label += ` / ${w.subType}`;
 
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
                     <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
-                        <div class="tag-pill" onclick="openCatEdit('${w.id}', '${safeName}')">${w.category === 'Scotch' ? `Scotch / ${w.region || '???'}` : (w.category || 'Cat')}</div>
+                        <div class="tag-pill" onclick="openCatEdit('${w.id}', '${safeName}')">${label}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${safeName}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
                     <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${safeName}', '${w.flavor || ''}')">
@@ -204,24 +205,42 @@
             refresh();
         };
 
-        // カテゴリー配列の変更
-        const cats = ["Scotch", "Japanese", "Irish", "American", "Canadian", "Others"], regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"];
+        const cats = ["Scotch", "Japanese", "Irish", "American", "Canadian", "Others"], 
+              regs = ["Highland", "Lowland", "Speyside", "Islay", "Islands", "Campbeltown"],
+              subTypes = ["Malt", "Blended", "Grain"];
+
         let tempName = "";
         window.openCatEdit = (id, name) => {
             tempName = name; document.getElementById('modal').style.display = 'flex';
             document.getElementById('modalTitle').innerText = name;
             document.getElementById('modalOptions').innerHTML = cats.map(c => `<button onclick="selCat('${id}', '${c}')" class="modal-btn color-${c}"><span>${c}</span></button>`).join('');
         };
+
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
-                document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="saveCat('${wid}', '${c}', '${r}')" class="modal-btn color-Scotch"><span>${r}</span></button>`).join('');
-            } else { saveCat(wid, c, null); }
+                document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="selSubType('${wid}', '${c}', '${r}')" class="modal-btn color-Scotch"><span>${r}</span></button>`).join('');
+            } else { 
+                selSubType(wid, c, null); 
+            }
         };
-        window.saveCat = async (wid, c, r) => {
-            if (wid !== "null") { await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r }); }
-            else {
+
+        // サブタイプ（Malt/Blended/Grain）の選択ステップを追加
+        window.selSubType = (wid, c, r) => {
+            document.getElementById('modalTitle').innerText = r ? `${c} / ${r}` : c;
+            document.getElementById('modalOptions').innerHTML = subTypes.map(s => `
+                <button onclick="saveCat('${wid}', '${c}', '${r}', '${s}')" class="modal-btn bg-slate-800 text-amber-500 border-amber-500/30"><span>${s}</span></button>
+            `).join('');
+        };
+
+        window.saveCat = async (wid, c, r, s) => {
+            if (wid !== "null") { 
+                await updateDoc(doc(db, "users", targetUID, "whiskies", wid), { category: c, region: r, subType: s }); 
+            } else {
                 const abv = prompt("度数", "40");
-                await addDoc(collection(db, "users", targetUID, "whiskies"), { name: tempName, category: c, region: r, remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() });
+                await addDoc(collection(db, "users", targetUID, "whiskies"), { 
+                    name: tempName, category: c, region: r, subType: s,
+                    remaining: 100, abv: parseFloat(abv) || 40, isWish: (currentPage === 'wish'), createdAt: serverTimestamp() 
+                });
             }
             closeModal();
         };
