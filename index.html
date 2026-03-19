@@ -26,8 +26,13 @@
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; width: 100%; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; border: 3px solid white; background: white; cursor: pointer; }
-        .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
+        
+        /* 検索バー周りの調整 */
+        .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 30px 6px 12px; font-size: 14px; color: white; width: 120px; outline: none; transition: width 0.3s; }
         .search-input:focus { width: 160px; border-color: #f59e0b; background: rgba(255,255,255,0.1); }
+        .clear-btn { position: absolute; right: 8px; color: #64748b; font-size: 18px; display: none; cursor: pointer; }
+        .search-input:not(:placeholder-shown) + .clear-btn { display: block; }
+
         .nav-tab { flex: 1; padding: 14px; font-weight: 900; font-size: 0.75rem; text-align: center; color: #475569; }
         .nav-tab.active { color: #f59e0b; border-bottom: 2px solid #f59e0b; }
         .sort-btn { font-size: 10px; font-weight: 800; padding: 6px 12px; border-radius: 12px; background: #1e293b; color: #94a3b8; }
@@ -46,6 +51,7 @@
                 <h1 class="text-lg italic gold-text tracking-[0.2em]">Whisky Stock</h1>
                 <div class="relative flex items-center">
                     <input type="text" id="searchInput" placeholder="Search..." oninput="updateSearch(this.value)" class="search-input">
+                    <button id="clearBtn" onclick="clearSearch()" class="clear-btn">×</button>
                 </div>
             </div>
             <nav class="flex">
@@ -112,6 +118,15 @@
 
         window.updateSearch = (val) => { searchQuery = val.toLowerCase(); render(); };
 
+        // 検索をクリアする関数を追加
+        window.clearSearch = () => {
+            const input = document.getElementById('searchInput');
+            input.value = "";
+            searchQuery = "";
+            render();
+            input.focus();
+        };
+
         window.render = () => {
             const list = document.getElementById('whiskyList');
             const catOrder = { "Scotch": 1, "Japanese": 2, "Blended": 3, "Irish": 4, "American": 5, "Others": 6 };
@@ -122,14 +137,12 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
-                // --- 検索ワード優先表示ロジック ---
                 if (searchQuery) {
                     const aStarts = a.name.toLowerCase().startsWith(searchQuery);
                     const bStarts = b.name.toLowerCase().startsWith(searchQuery);
                     if (aStarts && !bStarts) return -1;
                     if (!aStarts && bStarts) return 1;
                 }
-                // --- 以下、既存のソート機能（維持） ---
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99, orderB = catOrder[b.category] || 99;
                     return orderA !== orderB ? orderA - orderB : (a.region || "").localeCompare(b.region || "");
