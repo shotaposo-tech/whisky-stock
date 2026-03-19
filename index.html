@@ -20,14 +20,14 @@
         .color-Canadian { background: radial-gradient(circle at center, rgba(236,72,153,0.3), #020617); border-color: rgba(236,72,153,0.8); }
         .color-Others { background: radial-gradient(circle at center, rgba(71,85,105,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
-        /* 左上のタグをさらに最小化 */
+        /* 左上のタグ（最小サイズ維持） */
         .tag-pill { 
-            font-size: 8px; /* さらに縮小 */
-            padding: 1.5px 6px; /* 上下左右をさらに詰め */
+            font-size: 8px; 
+            padding: 1.5px 6px; 
             border-radius: 4px; 
             font-weight: 700; 
             background: rgba(0,0,0,0.7); 
-            border: 0.5px solid #fbbf24; /* 枠線も細く */
+            border: 0.5px solid #fbbf24; 
             color: #fbbf24; 
             white-space: nowrap; 
             width: fit-content; 
@@ -156,10 +156,11 @@
                     <div class="absolute top-4 right-5 flex flex-row-reverse gap-1 z-20" onclick="openFlvEdit('${w.id}', '${safeName}', '${w.flavor || ''}')">
                         ${flvArray.length > 0 ? flvArray.map(f => `<span class="flv-badge">${f}</span>`).join('') : `<span class="flv-badge ghost">None</span>`}
                     </div>
+                    
                     <div class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10" onclick="handleTap(event, '${w.id}', '${safeName}')">
                         <h3 class="main-name text-center text-white text-shadow-lg font-bold">${w.name}</h3>
-                        ${w.memo ? `<p class="text-[10px] text-amber-200/70 mt-1 font-medium italic text-center px-4">${w.memo}</p>` : ''}
                     </div>
+
                     ${w.isWish ? `
                         <div class="absolute bottom-4 left-0 right-0 flex justify-center z-30">
                             <button 
@@ -168,6 +169,9 @@
                         </div>
                     ` : `
                         <div class="slider-section" onclick="event.stopPropagation()">
+                            <div class="absolute -top-5 left-0 w-full">
+                                ${w.memo ? `<p class="text-[9px] text-amber-200/60 font-medium italic truncate pr-10">${w.memo}</p>` : ''}
+                            </div>
                             <input type="range" min="0" max="100" step="5" value="${w.remaining ?? 100}" 
                                 onchange="updateStock('${w.id}', this.value)" 
                                 oninput="this.nextElementSibling.innerText=this.value+'%'">
