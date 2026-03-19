@@ -20,7 +20,7 @@
         .color-Canadian { background: radial-gradient(circle at center, rgba(236,72,153,0.3), #020617); border-color: rgba(236,72,153,0.8); }
         .color-Others { background: radial-gradient(circle at center, rgba(71,85,105,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
-        .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; }
+        .tag-pill { font-size: 10px; padding: 3px 10px; border-radius: 8px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1.5px solid #fbbf24; color: #fbbf24; white-space: nowrap; width: fit-content; }
         .flv-badge { font-size: 10px; padding: 3px 10px; border-radius: 6px; background: linear-gradient(to bottom, #f59e0b, #b45309); color: #fff; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .flv-badge.ghost { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); box-shadow: none; }
         .slider-section { position: absolute; bottom: 15px; left: 25px; right: 25px; display: flex; align-items: center; gap: 18px; z-index: 25; }
@@ -135,14 +135,13 @@
                 const safeName = w.name.replace(/'/g, "\\'");
                 const safeMemo = (w.memo || "").replace(/'/g, "\\'");
                 
-                // 表示ラベルの構築
                 let label = w.category || 'Cat';
                 if (w.category === 'Scotch' && w.region) label += ` / ${w.region}`;
                 if (w.subType) label += ` / ${w.subType}`;
 
                 return `
                 <div class="whisky-card color-${w.category || 'Others'} ${currentPage === 'archive' ? 'is-archive' : ''}">
-                    <div class="absolute top-4 left-5 flex items-center gap-2 z-20">
+                    <div class="absolute top-4 left-5 flex flex-col gap-1.5 z-20">
                         <div class="tag-pill" onclick="openCatEdit('${w.id}', '${safeName}')">${label}</div>
                         <div class="tag-pill" onclick="editAbv('${w.id}', '${safeName}', '${w.abv || 40}')">${w.abv || 40}%</div>
                     </div>
@@ -219,12 +218,9 @@
         window.selCat = (wid, c) => {
             if (c === 'Scotch') {
                 document.getElementById('modalOptions').innerHTML = regs.map(r => `<button onclick="selSubType('${wid}', '${c}', '${r}')" class="modal-btn color-Scotch"><span>${r}</span></button>`).join('');
-            } else { 
-                selSubType(wid, c, null); 
-            }
+            } else { selSubType(wid, c, null); }
         };
 
-        // サブタイプ（Malt/Blended/Grain）の選択ステップを追加
         window.selSubType = (wid, c, r) => {
             document.getElementById('modalTitle').innerText = r ? `${c} / ${r}` : c;
             document.getElementById('modalOptions').innerHTML = subTypes.map(s => `
