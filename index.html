@@ -20,7 +20,6 @@
         .color-Canadian { background: radial-gradient(circle at center, rgba(236,72,153,0.3), #020617); border-color: rgba(236,72,153,0.8); }
         .color-Others { background: radial-gradient(circle at center, rgba(71,85,105,0.3), #020617); border-color: rgba(71,85,105,0.8); }
 
-        /* 左上のタグ（最小サイズ維持） */
         .tag-pill { 
             font-size: 8px; 
             padding: 1.5px 6px; 
@@ -128,6 +127,18 @@
                 if (currentPage === 'archive') return stock <= 0 && !w.isWish;
                 return w.isWish === true;
             }).sort((a, b) => {
+                // --- 検索ワード優先ロジックを追加 (前方一致を最優先) ---
+                if (searchQuery) {
+                    const aName = a.name.toLowerCase();
+                    const bName = b.name.toLowerCase();
+                    const aStarts = aName.startsWith(searchQuery);
+                    const bStarts = bName.startsWith(searchQuery);
+
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                }
+                // ---------------------------------------------------
+
                 if (currentSort === 'category') {
                     const orderA = catOrder[a.category] || 99, orderB = catOrder[b.category] || 99;
                     return orderA !== orderB ? orderA - orderB : (a.region || "").localeCompare(b.region || "");
